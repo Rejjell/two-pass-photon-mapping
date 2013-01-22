@@ -1,0 +1,1 @@
+C:\backup\PhotonMapping\opentkTextureTest\bin\Debug\opentkTextureTest.exe.config
