@@ -54,14 +54,11 @@ namespace StarterKit
             renderShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "");
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
 
-            Allocation();
-
-            PhotonMappingUniformSet();
-            RayTracingUniformSet();
-
-            
+            Allocation();            
 
         }
+
+        float PhotonIntensity = 100.0F ;
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
@@ -80,14 +77,17 @@ namespace StarterKit
             if (Keyboard[Key.Keypad2]) camera.RotateAroundRight(-0.05f);
             if (Keyboard[Key.Keypad9]) camera.RotateAroundView(0.05f);
             if (Keyboard[Key.Keypad7]) camera.RotateAroundView(-0.05f);
+            if (Keyboard[Key.KeypadAdd]) PhotonIntensity+=5;
+            if (Keyboard[Key.KeypadMinus]) PhotonIntensity-=5;
             if (Keyboard[Key.Plus]) camera.ScalePlus();
             if (Keyboard[Key.Minus]) camera.ScaleMinus();
             if (Keyboard[Key.Q]) Console.WriteLine(camera.GetCoords());
+
         }
 
         private void Allocation()
         {
-                        float[] allocation = new float[mapWidth * mapHeight * 3];
+            float[] allocation = new float[mapWidth * mapHeight * 3];
             //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
 
             Stopwatch sw = new Stopwatch();
@@ -116,6 +116,7 @@ namespace StarterKit
             GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, allocation);
             
+
             float[] fpix = new float[80 * 80 * 3];
             GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, fpix);
         }
@@ -125,24 +126,24 @@ namespace StarterKit
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+            PhotonMappingUniformSet();
+            RayTracingUniformSet();
+
             //angle += 0.1f;
-
-            
-
             frameBuffer.Activate();
             PhotonMapping();
             frameBuffer.Deactivate();
-
             GL.BindTexture(TextureTarget.TextureRectangleArb, frameBuffer.GetTexture());
-
-            float[] pix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
-
+            
+            //float[] pix = new float[mapWidth * mapHeight * 3];
+            //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
+            
             PhotonMapSort();
-
             renderShader.SetUniformTexture(frameBuffer.GetTexture(), TextureUnit.Texture2, "PhotonTexture");
             RayTracing();
-            
+
+            GL.BindTexture(TextureTarget.TextureRectangleArb, allocationTexture);
+
             SwapBuffers();
         }
 
@@ -175,7 +176,7 @@ namespace StarterKit
                 renderShader.SetUniform("Delta", 0.8F);
                 renderShader.SetUniform("InverseDelta", 1.0F / 0.8F);
                 renderShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
-                renderShader.SetUniform("PhotonIntensity", 100.0F / (mapWidth * mapHeight));
+                renderShader.SetUniform("PhotonIntensity",  PhotonIntensity / (mapWidth * mapHeight));
 
                 renderShader.SetUniform("Camera.Position", camera.GetPosition());
                 renderShader.SetUniform("Camera.View", camera.GetView());
@@ -210,7 +211,7 @@ namespace StarterKit
             GL.Viewport(0, 0, mapWidth, mapHeight);
 
             photonShader.Activate();
-            photonShader.SetUniformTexture(allocationTexture, TextureUnit.Texture0, "AllocationTexture");
+            //photonShader.SetUniformTexture(allocationTexture, TextureUnit.Texture0, "AllocationTexture");
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-40, -40);
                 GL.Vertex2(40, -40);
@@ -232,7 +233,7 @@ namespace StarterKit
             float[] pixSorted = list.ToFloatArray();
 
             GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
-                          PixelType.Float, pixSorted);
+                         PixelType.Float, pixSorted);
         }
         
 

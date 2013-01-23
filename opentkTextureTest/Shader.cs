@@ -114,6 +114,7 @@ namespace StarterKit
             GL.ActiveTexture(textureUnit);
             GL.BindTexture(TextureTarget.Texture2D, textureId);
             GL.Uniform1(GL.GetUniformLocation(program, UniformName), (float)textureUnit);
+            GL.ActiveTexture(TextureUnit.Texture0 );
         }
     }
 }
