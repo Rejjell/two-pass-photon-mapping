@@ -161,9 +161,11 @@ float RND_1d(vec2 x)
 SRay GenerateRay ( void )
 {
 #ifdef PHOTON_MAP
-	float u=gl_TexCoord[0].x;
+	/*float u=gl_TexCoord[0].x;
 	float theta=-(gl_TexCoord[0].y+1.0)*PI/2;
-	vec3 direction = vec3(sqrt(1-u*u)*cos(theta),sqrt(1-u*u)*sin(theta), u);
+	vec3 direction = vec3(sqrt(1-u*u)*cos(theta),sqrt(1-u*u)*sin(theta), u);*/
+
+	vec3 direction = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	
 	return SRay ( Light.Position, normalize ( direction ) );
 #else
@@ -503,9 +505,9 @@ void main ( void )
 	}   // Tracing primary ray
 
 	#ifdef PHOTON_MAP
-		//gl_FragColor = vec4 ( intersect.Point, 0.0 );
+		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
-		gl_FragColor = texture2DRect(AllocationTexture, gl_TexCoord[0].st);
+		//gl_FragColor = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	#else
 		gl_FragColor = vec4 ( color, 1.0 );
 	#endif
