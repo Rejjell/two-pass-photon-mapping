@@ -99,6 +99,7 @@ uniform RectangleLightStruct RectangleLight;
 	uniform sampler2DRect PhotonTexture;
 #else
 	uniform sampler2DRect AllocationTexture;
+	uniform float maxPhotons;
 #endif
 
 float IntersectBox ( SRay ray, vec3 minimum, vec3 maximum )
@@ -149,15 +150,6 @@ bool IntersectSphere ( SRay ray, float start, float final, out float time, SSphe
 	return false;
 }
 
-float RND_1d(vec2 x)
-{
-	uint n = floatBitsToUint(x.y * 214013.0 + x.x * 2531011.0);
-	n = n * (n * n * 15731u + 789221u);
-	n = (n >> 9u) | 0x3F800000u;
-
-	return 2.0 - uintBitsToFloat(n);
-}
-
 SRay GenerateRay ( void )
 {
 #ifdef PHOTON_MAP
@@ -199,6 +191,8 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		float diffuse = max ( dot ( light, intersect.Normal ), 0.0 );
 		vec3 reflect = reflect ( -view, intersect.Normal );
 		float specular = pow ( max ( dot ( reflect, light ), 0.0 ), intersect.Material.w );
+
+
 
 		return intersect.Material.x * Unit +
 			   intersect.Material.y * diffuse * intersect.Color +
