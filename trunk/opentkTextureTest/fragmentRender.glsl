@@ -503,14 +503,10 @@ void main ( void )
 	}   // Tracing primary ray
 
 	#ifdef PHOTON_MAP
-		gl_FragColor = vec4 ( intersect.Point, 0.0 );
+		//gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
-		/*float a = gl_TexCoord[0].x*3.14;
-		float b = (gl_TexCoord[0].y+1.0)*3.14;
-	   
-		gl_FragColor = vec4(sin(a)* cos(b), -cos(a), sin(a)* sin(b) ,0.0);*/
-	#else	
-		
+		gl_FragColor = texture2DRect(AllocationTexture, gl_TexCoord[0].st);
+	#else
 		gl_FragColor = vec4 ( color, 1.0 );
 	#endif
 }
