@@ -94,7 +94,7 @@ namespace StarterKit
             GL.Viewport(0, 0, w, h);
 
             frameBuffer = new FrameBuffer(mapWidth,mapHeight);
-            Allocation();
+
             angle = 0.0f;
         }
 
@@ -148,13 +148,13 @@ namespace StarterKit
             renderShader.SetUniform("GlassSphere.Radius", 2.0F);
             renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, 1.0F));
             renderShader.SetUniform("MatSphere.Radius", 1.0F);
-            renderShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 0.0F, 0.0F/* + (float)Math.Cos(angle)*/));
-            renderShader.SetUniformTexture(frameBuffer.GetTexture(),TextureUnit.Texture0,"PhotonTexture");
+            renderShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 4.0F, 0.0F/* + (float)Math.Cos(angle)*/));
+            renderShader.SetUniformTexture(frameBuffer.GetTexture(),TextureUnit.Texture2,"PhotonTexture");
             
-            renderShader.SetUniform("Delta", 0.6F);
-            renderShader.SetUniform("InverseDelta", 1.0F / 0.6F);
+            renderShader.SetUniform("Delta", 0.8F);
+            renderShader.SetUniform("InverseDelta", 1.0F / 0.8F);
             renderShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
-            renderShader.SetUniform("PhotonIntensity", 50.0F / (mapWidth * mapHeight));
+            renderShader.SetUniform("PhotonIntensity", 100.0F / (mapWidth * mapHeight));
 
             renderShader.SetUniform("Camera.Position", camera.GetPosition());
             renderShader.SetUniform("Camera.View", camera.GetView());
@@ -184,10 +184,10 @@ namespace StarterKit
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
                 photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, 1.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
-                photonShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 0.0F, 0.0F/* + (float)Math.Cos(angle)*/));
+                photonShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 4.0F, 0.0F/* + (float)Math.Cos(angle)*/));
                 photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
                 photonShader.SetUniform("Light.Distance", 0.5F * 10);
-                photonShader.SetUniformTexture(allocationTexture, TextureUnit.Texture0, "AllocationTexture");
+                //photonShader.SetUniformTexture(allocationTexture, TextureUnit.Texture0, "AllocationTexture");
                 
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-40, -40);
@@ -198,61 +198,21 @@ namespace StarterKit
             photonShader.Deactivate();
         }
 
-        private void Allocation()
-        {
-                        float[] allocation = new float[mapWidth * mapHeight * 3];
-            //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
-
-            float anglei = 0.0f;
-            float anglej = 0.0f;
-
-            var rnd = new Random();
-
-            rnd.NextDouble();
-            /*
-            for (int i = 0; i < 80; i++)
-            {
-                anglei += (float)Math.PI/80;
-
-                for (int j = 0; j < 80; j++)
-                {
-                    anglej += (float)Math.PI/80;
-
-                    allocation[(i*80 + j)*3] = (float) Math.Cos(anglei);
-                    allocation[(i * 80 + j) * 3 + 1] = (float)Math.Sin(anglei) + (float)Math.Cos(anglej);
-                    allocation[(i * 80 + j) * 3 + 2] = (float)Math.Sin(anglej);
-                }
-            }*/
-
-
-            for (int i = 0; i < 80; i++)
-            {
-                for (int j = 0; j < 80; j++)
-                {
-                    allocation[(i * 80 + j) * 3] =(float) rnd.NextDouble()*2-1;
-                    allocation[(i * 80 + j) * 3 + 1] = (float)rnd.NextDouble();
-                    allocation[(i * 80 + j) * 3 + 2] = (float)rnd.NextDouble()*2-1;
-                }
-            }
-            
-            GL.GenTextures(1, out allocationTexture);
-            GL.BindTexture(TextureTarget.TextureRectangleArb, allocationTexture);
-            GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
-                         PixelType.Float, allocation);
-            
-          /*  float[] fpix = new float[80 * 80 * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, fpix);*/
-        }
-
-
+        
         private void PhotonMapping()
         {
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
+
+            //GL.ActiveTexture();
 
             frameBuffer.Activate();
             GL.Viewport(0,0,mapWidth,mapHeight);
             CreatePhotonMap();
             frameBuffer.Deactivate();
+
+
+            //photonTexture = (uint)LoadPhotonTexture("1.bmp");
+            //GL.BindTexture(TextureTarget.Texture2D, photonTexture);
 
             GL.BindTexture(TextureTarget.TextureRectangleArb, frameBuffer.GetTexture());
 
@@ -269,7 +229,17 @@ namespace StarterKit
             //float[] fpix = new float[80 * 80 * 3];
             //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, fpix);
 
-           
+            
+            //GL.BindTexture(TextureTarget.Texture2D, frameBuffer.GetTexture());
+            /*GL.Enable(EnableCap.Texture2D);
+
+            GL.Color3(Color.White);
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex2(-1, -1);
+            GL.TexCoord2(1, 0); GL.Vertex2(1, -1);
+            GL.TexCoord2(1, 1); GL.Vertex2(1, 1);
+            GL.TexCoord2(0, 1); GL.Vertex2(-1, 1);
+            GL.End();*/
         }
 
         [STAThread]

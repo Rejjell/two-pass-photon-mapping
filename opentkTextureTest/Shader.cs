@@ -113,7 +113,7 @@ namespace StarterKit
         {
             GL.ActiveTexture(textureUnit);
             GL.BindTexture(TextureTarget.Texture2D, textureId);
-            GL.Uniform1(GL.GetUniformLocation(program, UniformName), textureUnit - TextureUnit.Texture0);
+            GL.Uniform1(GL.GetUniformLocation(program, UniformName), (float)textureUnit);
         }
     }
 }
