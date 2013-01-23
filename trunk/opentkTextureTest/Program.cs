@@ -84,6 +84,7 @@ namespace StarterKit
             if (Keyboard[Key.Q]) Console.WriteLine(camera.GetCoords());
 
         }
+        
 
         private void Allocation()
         {
@@ -95,21 +96,40 @@ namespace StarterKit
 
             var rnd = new Random();
 
-            for (int i = 0; i < 80; i++)
+           /* for (int i = 0; i < 80; i++)
             {
                 for (int j = 0; j < 80; j++)
                 {
-                    
+
                     long t = sw.ElapsedMilliseconds;
                     //double t = DateTime.Now.Millisecond;
 
-                    
-                    
-                    allocation[(i * 80 + j) * 3] =(float) rnd.NextDouble()*2-1;
-                    allocation[(i * 80 + j) * 3 + 1] = (float)rnd.NextDouble()*2-1;
-                    allocation[(i * 80 + j) * 3 + 2] = (float)rnd.NextDouble()*2-1;
+                    allocation[(i * 80 + j) * 3] = (float)rnd.NextDouble() * 2 - 1;
+                    allocation[(i * 80 + j) * 3 + 1] = (float)rnd.NextDouble() * 2 - 1;
+                    allocation[(i * 80 + j) * 3 + 2] = (float)rnd.NextDouble() * 2 - 1;
+                }
+            }*/
+
+            float rayNum =(float) Math.Sqrt(80 * 80 / 5);
+
+            for (int i = 0; i < rayNum; i++)
+            {
+                for (int j = 0; j < rayNum; j++)
+                {
+                    allocation[(i * 80 + j) * 3] = (float)-1;
+                    allocation[(i * 80 + j) * 3 + 1] = 0 + -2 / (float)Math.Sqrt(6400 / 5) * i;
+                    allocation[(i * 80 + j) * 3 + 2] = -1 + 2 / (float)Math.Sqrt(6400 / 5) * j;
                 }
             }
+
+
+
+
+
+
+
+
+
             
             GL.GenTextures(1, out allocationTexture);
             GL.BindTexture(TextureTarget.TextureRectangleArb, allocationTexture);
@@ -156,7 +176,7 @@ namespace StarterKit
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
                 photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, 1.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
-                photonShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 4.0F, 0.0F/* + (float)Math.Cos(angle)*/));
+                photonShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 5.0F, 0.0F/* + (float)Math.Cos(angle)*/));
                 photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
                 photonShader.SetUniform("Light.Distance", 0.5F * 10);
             photonShader.Deactivate();
@@ -171,7 +191,7 @@ namespace StarterKit
                 renderShader.SetUniform("GlassSphere.Radius", 2.0F);
                 renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, 1.0F));
                 renderShader.SetUniform("MatSphere.Radius", 1.0F);
-                renderShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 4.0F, 0.0F/* + (float)Math.Cos(angle)*/));
+                renderShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 5.0F, 0.0F/* + (float)Math.Cos(angle)*/));
 
                 renderShader.SetUniform("Delta", 0.8F);
                 renderShader.SetUniform("InverseDelta", 1.0F / 0.8F);
