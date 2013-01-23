@@ -109,12 +109,16 @@ namespace StarterKit
             GL.UseProgram(0);
         }
 
-        public void SetUniformTexture(uint textureId, TextureUnit textureUnit, string UniformName)
+        public void SetUniformTexture(uint textureId, string UniformName)
         {
-            GL.ActiveTexture(textureUnit);
-            GL.BindTexture(TextureTarget.Texture2D, textureId);
-            GL.Uniform1(GL.GetUniformLocation(program, UniformName), (float)textureUnit);
-            GL.ActiveTexture(TextureUnit.Texture0 );
+            //GL.BindTexture(TextureTarget.Texture2D, textureId);
+            GL.Uniform1(GL.GetUniformLocation(program, UniformName), (float)TextureUnit.Texture0);
         }
+        public void SetUniformTextureRect(uint textureId, string UniformName)
+        {
+            //GL.BindTexture(TextureTarget.TextureRectangle, textureId);
+            GL.Uniform1(GL.GetUniformLocation(program, UniformName), (float)TextureUnit.Texture0);
+        }
+
     }
 }
