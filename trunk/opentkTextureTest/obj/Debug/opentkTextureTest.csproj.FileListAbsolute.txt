@@ -1,0 +1,15 @@
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\opentkTextureTest.exe.config
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\opentkTextureTest.exe
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\opentkTextureTest.pdb
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\OpenTK.Compatibility.dll
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\OpenTK.dll
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\OpenTK.GLControl.dll
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\OpenTK.xml
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\OpenTK.Compatibility.xml
+E:\TurlapovSVN\opentkTextureTest\bin\Debug\OpenTK.GLControl.xml
+E:\TurlapovSVN\opentkTextureTest\obj\Debug\opentkTextureTest.csprojResolveAssemblyReference.cache
+E:\TurlapovSVN\opentkTextureTest\obj\Debug\opentkTextureTest.exe
+E:\TurlapovSVN\opentkTextureTest\obj\Debug\opentkTextureTest.pdb
+E:\PhotonMappingSVN\opentkTextureTest\bin\Debug\opentkTextureTest.exe.config
+E:\PhotonMappingSVN\opentkTextureTest\obj\Debug\opentkTextureTest.exe
+E:\PhotonMappingSVN\opentkTextureTest\obj\Debug\opentkTextureTest.pdb

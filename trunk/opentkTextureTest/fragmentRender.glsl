@@ -177,15 +177,38 @@ SRay GenerateRay ( void )
 {
 #ifdef PHOTON_MAP
 
-	//float rn = RND_1d(gl_FragCoord.xy);
-	/*
-	vec3 direction = AxisX * gl_TexCoord[0].x * Light.Radius.x +
+	/*vec3 direction = AxisX * gl_TexCoord[0].x * Light.Radius.x +
 	                 AxisZ * gl_TexCoord[0].y * Light.Radius.y -
-	                 AxisY * Light.Distance;*/
-					 
-	vec3 direction = texture2DRect (
-			AllocationTexture, gl_TexCoord[0].st );
-   
+	                 AxisY * 10*rn * Light.Distance;*/
+
+		/*float u = (gl_TexCoord[0].x+1.0)/2;
+		float v = (gl_TexCoord[0].y+1.0)/2;
+
+		float a = acos(2*v-1);
+		float b = 2*3.14*u;
+		
+
+		vec3 direction = vec3(sin(a)*cos(b),cos(a),sin(a)*sin(b));*/
+
+
+		/*float a = (gl_TexCoord[0].x+1.0)*1.57;
+		float b = -(gl_TexCoord[0].y+1.0)*3.14;
+
+		vec3 direction = vec3(sin(a)*cos(b),cos(a), sin(a)*sin(b));*/
+
+		/*float phi = 3.14 *(gl_TexCoord[0].x+1.0);
+		float cos_theta = gl_TexCoord[0].y;
+		float sin_theta = sqrt(1 - cos_theta * cos_theta);
+		vec3 direction = vec3(cos_theta, sin_theta * cos(phi), sin_theta * sin(phi));*/
+
+		float u=gl_TexCoord[0].x;
+		float theta=-(gl_TexCoord[0].y+1.0)*1.57;
+
+	
+		vec3 direction = vec3(sqrt(1-u*u)*cos(theta),sqrt(1-u*u)*sin(theta), u);
+
+		
+
 	return SRay ( Light.Position, normalize ( direction ) );
 
 #else
@@ -598,6 +621,10 @@ void main ( void )
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
+		/*float a = gl_TexCoord[0].x*3.14;
+		float b = (gl_TexCoord[0].y+1.0)*3.14;
+	   
+		gl_FragColor = vec4(sin(a)* cos(b), -cos(a), sin(a)* sin(b) ,0.0);*/
 	#else	
 		gl_FragColor = vec4 ( color, 1.0 );
 	#endif
