@@ -626,6 +626,7 @@ void main ( void )
 	   
 		gl_FragColor = vec4(sin(a)* cos(b), -cos(a), sin(a)* sin(b) ,0.0);*/
 	#else	
+		
 		gl_FragColor = vec4 ( color, 1.0 );
 	#endif
 }
