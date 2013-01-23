@@ -122,7 +122,32 @@ namespace StarterKit
                 }
             }
 
+          /*  int I;
+            int J;
+            for ( i = 0; i < 80; i++)
+            {
+                for ( j = 0; j < 80; j++)
+                {
+                  (  allocation[(i * 80 + j) * 3 + 2] == 0) breake;
+                }
+            }
+            */
 
+            /*
+            int offset = 0;
+            offset +=  1280+1000;
+
+            for (int i =  0; i < rayNum; i++)
+            {
+                for (int j =  0; j < rayNum; j++)
+                {
+                    allocation[(offset+i * 80 + j) * 3] = (float)1;
+                    allocation[(offset+i * 80 + j) * 3 + 1] = 0 + -2 / (float)Math.Sqrt(6400 / 5) * i;
+                    allocation[(offset+i * 80 + j) * 3 + 2] = -1 + 2 / (float)Math.Sqrt(6400 / 5) * j;
+                }
+            }
+            
+            */
 
 
 
