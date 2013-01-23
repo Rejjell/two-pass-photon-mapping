@@ -3,6 +3,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using System.Drawing;
+using System.Diagnostics;
 
 namespace StarterKit
 {
@@ -89,19 +90,23 @@ namespace StarterKit
                         float[] allocation = new float[mapWidth * mapHeight * 3];
             //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
 
-            float anglei = 0.0f;
-            float anglej = 0.0f;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
             var rnd = new Random();
-
-            rnd.NextDouble();
 
             for (int i = 0; i < 80; i++)
             {
                 for (int j = 0; j < 80; j++)
                 {
+                    
+                    long t = sw.ElapsedMilliseconds;
+                    //double t = DateTime.Now.Millisecond;
+
+                    
+                    
                     allocation[(i * 80 + j) * 3] =(float) rnd.NextDouble()*2-1;
-                    allocation[(i * 80 + j) * 3 + 1] = (float)rnd.NextDouble();
+                    allocation[(i * 80 + j) * 3 + 1] = (float)rnd.NextDouble()*2-1;
                     allocation[(i * 80 + j) * 3 + 2] = (float)rnd.NextDouble()*2-1;
                 }
             }
@@ -121,6 +126,8 @@ namespace StarterKit
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             //angle += 0.1f;
+
+            
 
             frameBuffer.Activate();
             PhotonMapping();
@@ -142,7 +149,6 @@ namespace StarterKit
         private void PhotonMappingUniformSet()
         {
             photonShader.Activate();
-                photonShader.SetUniformTexture(allocationTexture, TextureUnit.Texture0, "PhotonTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 photonShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -3.0F));
@@ -204,6 +210,7 @@ namespace StarterKit
             GL.Viewport(0, 0, mapWidth, mapHeight);
 
             photonShader.Activate();
+            photonShader.SetUniformTexture(allocationTexture, TextureUnit.Texture0, "AllocationTexture");
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-40, -40);
                 GL.Vertex2(40, -40);
