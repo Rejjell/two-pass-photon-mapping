@@ -17,25 +17,27 @@ namespace StarterKit
         public FrameBuffer(int mapWidth,int mapHeight)
         {
             GL.GenTextures(1, out ColorTexture);
-            GL.BindTexture(TextureTarget.TextureRectangle, ColorTexture);
+            GL.BindTexture(TextureTarget.TextureRectangleArb, ColorTexture);
             //GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             //GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.TextureRectangle, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.TextureRectangle, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb, PixelType.Float, IntPtr.Zero);
+            GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb, PixelType.Float, IntPtr.Zero);
+
+            GL.BindTexture(TextureTarget.TextureRectangleArb, 0);
 
             GL.Ext.GenFramebuffers(1, out FboHandle);
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, FboHandle);
-            GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.TextureRectangle, ColorTexture, 0);
+            GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.TextureRectangleArb, ColorTexture, 0);
 
             GL.DrawBuffer((DrawBufferMode)FramebufferAttachment.ColorAttachment0Ext);
 
-            //GL.PushAttrib(AttribMask.ViewportBit);
+            GL.PushAttrib(AttribMask.ViewportBit);
             GL.Viewport(0, 0, mapWidth, mapHeight);
 
-            //GL.PopAttrib();
+            GL.PopAttrib();
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
-            //GL.DrawBuffer(DrawBufferMode.Back);
+            GL.DrawBuffer(DrawBufferMode.Back);
         }
 
         public void Activate()
@@ -45,9 +47,9 @@ namespace StarterKit
 
         public void Deactivate()
         {
-            //GL.PopAttrib();
+            GL.PopAttrib();
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
-            //GL.DrawBuffer(DrawBufferMode.Back);
+            GL.DrawBuffer(DrawBufferMode.Back);
         }
 
         public uint GetTexture()
@@ -55,6 +57,10 @@ namespace StarterKit
             return ColorTexture;
         }
 
+        public void DeleteTexture()
+        {
+            GL.DeleteTexture(ColorTexture);
+        }
 
 
     }

@@ -26,8 +26,6 @@ namespace StarterKit
         int mapWidth = 80;
         int mapHeight = 80;
 
-        float PhotonIntensity = 100.0F;
-
         public Game()
             : base(w, h, OpenTK.Graphics.GraphicsMode.Default, "OpenTK Quick Start Sample")
         {
@@ -39,6 +37,7 @@ namespace StarterKit
             base.OnLoad(e);
 
             GL.ClearColor(0.0f, 0.4f, 0.0f, 0.0f);
+            GL.Enable(EnableCap.Texture2D);
             
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -48,21 +47,18 @@ namespace StarterKit
             GL.LoadIdentity();
             GL.Viewport(0, 0, w, h);
 
-            
+            frameBuffer = new FrameBuffer(mapWidth,mapHeight);
 
             angle = 0.0f;
 
             renderShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "");
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
 
-            frameBuffer = new FrameBuffer(mapWidth, mapHeight);
-            Allocation(); 
-
-                       
+            Allocation();            
 
         }
 
-
+        float PhotonIntensity = 100.0F ;
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
@@ -93,82 +89,81 @@ namespace StarterKit
         private void Allocation()
         {
             float[] allocation = new float[mapWidth * mapHeight * 3];
-            float step = 2/(float)Math.Sqrt(mapWidth*mapHeight/6);
-            int i = 0;
+            //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
 
-            for (float u = -1+step; u < 1; u += step)
-                for (float v = -2+step; v < 0; v += step)
-                {
-                    allocation[i] = 1;
-                    allocation[i + 1] = v;
-                    allocation[i + 2] = u;
-                    i += 3;
-                }
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
-            for (float u = -1 + step; u < 1.0; u += step)
-                for (float v = -2 + step; v < 0; v += step)
-                 {
-                     allocation[i] = -1;
-                     allocation[i + 1] = v;
-                     allocation[i + 2] = u;
-                     i += 3;
-                 }
+            var rnd = new Random();
 
-            for (float u = -1 + step; u < 1; u += step)
-                 for (float v = -2 + step; v < 0; v += step)
-                 {
-                     allocation[i] = u;
-                     allocation[i + 1] = v;
-                     allocation[i + 2] = 1;
-                     i += 3;
-                 }
-
-            for (float u = -1 + step; u < 1.0; u += step)
-                 for (float v = -2 + step; v < 0; v += step)
-                 {
-                     allocation[i] = u;
-                     allocation[i + 1] = v;
-                     allocation[i + 2] = -1;
-                     i += 3;
-                 }
-
-            for (float u = -1 + step; u < 1; u += step)
-                 for (float v = -1 + step; v < 1; v += step)
-                 {
-                     allocation[i] = u;
-                     allocation[i + 1] = -2;
-                     allocation[i + 2] = v;
-                     i += 3;
-                 }
-
-
-            /*for (float u = -1 + step; u < 1; u += step)
-                for (float v = -1 + step; v < 1; v += step)
-                {
-                    allocation[i] = 0.1f*u;
-                    allocation[i + 1] = 0.1f;
-                    allocation[i + 2] = 0.1f*v;
-                    i += 3;
-                }*/
-
-            Random rnd = new Random();
-
-            while (i < allocation.Length)
+           /* for (int i = 0; i < 80; i++)
             {
-                allocation[i] = (float)rnd.NextDouble();
-                allocation[i + 1] = (float)rnd.NextDouble();
-                allocation[i + 2] = (float)rnd.NextDouble();
-                i += 3;
+                for (int j = 0; j < 80; j++)
+                {
+
+                    long t = sw.ElapsedMilliseconds;
+                    //double t = DateTime.Now.Millisecond;
+
+                    allocation[(i * 80 + j) * 3] = (float)rnd.NextDouble() * 2 - 1;
+                    allocation[(i * 80 + j) * 3 + 1] = (float)rnd.NextDouble() * 2 - 1;
+                    allocation[(i * 80 + j) * 3 + 2] = (float)rnd.NextDouble() * 2 - 1;
+                }
+            }*/
+
+            float rayNum =(float) Math.Sqrt(80 * 80 / 5);
+
+            for (int i = 0; i < rayNum; i++)
+            {
+                for (int j = 0; j < rayNum; j++)
+                {
+                    allocation[(i * 80 + j) * 3] = -1 + 2 / (float)Math.Sqrt(6400 / 5) * i;
+                    allocation[(i * 80 + j) * 3 + 1] = -2 ;
+                    allocation[(i * 80 + j) * 3 + 2] = -1 + 2 / (float)Math.Sqrt(6400 / 5) * j;
+                }
+            }
+
+          /*  int I;
+            int J;
+            for ( i = 0; i < 80; i++)
+            {
+                for ( j = 0; j < 80; j++)
+                {
+                  (  allocation[(i * 80 + j) * 3 + 2] == 0) breake;
+                }
+            }
+            */
+
+            /*
+            int offset = 0;
+            offset +=  1280+1000;
+
+            for (int i =  0; i < rayNum; i++)
+            {
+                for (int j =  0; j < rayNum; j++)
+                {
+                    allocation[(offset+i * 80 + j) * 3] = (float)1;
+                    allocation[(offset+i * 80 + j) * 3 + 1] = 0 + -2 / (float)Math.Sqrt(6400 / 5) * i;
+                    allocation[(offset+i * 80 + j) * 3 + 2] = -1 + 2 / (float)Math.Sqrt(6400 / 5) * j;
+                }
             }
             
+            */
+
+
+
+
+
+
+
+            
             GL.GenTextures(1, out allocationTexture);
-            GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
-            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
+            GL.BindTexture(TextureTarget.TextureRectangleArb, allocationTexture);
+            GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, allocation);
             
 
             float[] fpix = new float[80 * 80 * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
+            GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, fpix);
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -183,25 +178,23 @@ namespace StarterKit
             frameBuffer.Activate();
             PhotonMapping();
             frameBuffer.Deactivate();
+            GL.BindTexture(TextureTarget.TextureRectangleArb, frameBuffer.GetTexture());
             
             //float[] pix = new float[mapWidth * mapHeight * 3];
             //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
             
             PhotonMapSort();
-            
-            renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), "PhotonTexture");
+            renderShader.SetUniformTexture(frameBuffer.GetTexture(), TextureUnit.Texture2, "PhotonTexture");
             RayTracing();
 
+            GL.BindTexture(TextureTarget.TextureRectangleArb, allocationTexture);
+
             SwapBuffers();
-
-            GL.BindTexture(TextureTarget.TextureRectangle, 0);
-
         }
 
         private void PhotonMappingUniformSet()
         {
             photonShader.Activate();
-                photonShader.SetUniformTextureRect(allocationTexture, "AllocationTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 photonShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -3.0F));
@@ -248,6 +241,7 @@ namespace StarterKit
             GL.Viewport(0,0,w,h);
             
             renderShader.Activate();
+                GL.Color3(Color.Red);
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-400, -400);
                 GL.Vertex2(400, -400);
@@ -262,6 +256,7 @@ namespace StarterKit
             GL.Viewport(0, 0, mapWidth, mapHeight);
 
             photonShader.Activate();
+            //photonShader.SetUniformTexture(allocationTexture, TextureUnit.Texture0, "AllocationTexture");
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-40, -40);
                 GL.Vertex2(40, -40);
@@ -273,18 +268,17 @@ namespace StarterKit
 
         private void PhotonMapSort()
         {
-            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
+            GL.BindTexture(TextureTarget.TextureRectangleArb, frameBuffer.GetTexture());
 
             float[] pix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
+            GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
 
             Vec3List list = new Vec3List(pix);
             list.Sort();
             float[] pixSorted = list.ToFloatArray();
 
-            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
+            GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, pixSorted);
-
         }
         
 
