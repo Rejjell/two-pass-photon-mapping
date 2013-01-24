@@ -51,7 +51,8 @@ struct RectangleLightStruct
 	float Length;
 };
 
-#define TRACE_DEPTH_1					// Sets number of secondary rays ( from 1 to 3 )
+#define TRACE_DEPTH_1
+// Sets number of secondary rays ( from 1 to 3 )
 
 const float GlassAirIndex = 4.5;							// Ratio of refraction indices of glass and air
 const float AirGlassIndex = 1.0 / GlassAirIndex;			// Ratio of refraction indices of air and glass
@@ -97,9 +98,11 @@ uniform RectangleLightStruct RectangleLight;
 	uniform float Delta;							// Radius of vicinity for gathering of photons
 	uniform float InverseDelta;						// Inverse radius for fast calculations
 	uniform sampler2DRect PhotonTexture;
+	uniform sampler2DRect RandomTexture;
 #else
 	uniform sampler2DRect AllocationTexture;
 #endif
+
 
 float IntersectBox ( SRay ray, vec3 minimum, vec3 maximum )
 {
@@ -164,15 +167,16 @@ SRay GenerateRay ( void )
 	/*float u=gl_TexCoord[0].x;
 	float theta=-(gl_TexCoord[0].y+1.0)*PI/2;
 	vec3 direction = vec3(sqrt(1-u*u)*cos(theta),sqrt(1-u*u)*sin(theta), u);*/
-
 	vec3 direction = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
-	
 	return SRay ( Light.Position, normalize ( direction ) );
 #else
 	vec2 coords = gl_TexCoord[0].xy * Camera.Scale;
 	vec3 direction = Camera.View + Camera.Side * coords.x + Camera.Up * coords.y;
 
+	vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+
 	return SRay ( Camera.Position, normalize ( direction ) );
+
 #endif
 }
 
@@ -376,10 +380,10 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		intersect.Normal = normalize ( intersect.Point - GlassSphere.Center );
 
 		#ifndef PHOTON_MAP
-			/*intersect.Color = GlassColor;
-			intersect.Material = GlassMaterial;*/
-			intersect.Color = MatColor;
-			intersect.Material = MatMaterial;
+			intersect.Color = GlassColor;
+			intersect.Material = GlassMaterial;
+			/*intersect.Color = MatColor;
+			intersect.Material = MatMaterial;*/
 
 		#endif
 
@@ -538,8 +542,13 @@ void main ( void )
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
-		//gl_FragColor = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+		//gl_FragColor = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	#else
 		gl_FragColor = vec4 ( color, 1.0 );
+		vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+		 gl_FragColor = vec4(d,1);
+		//vec4 tex =texture2DRect(AllocationTexture, vec2(10, 10));
+		//if (texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40)).x!=0)
+		//gl_FragColor = vec4(0,1,0,1) ; 
 	#endif
 }
