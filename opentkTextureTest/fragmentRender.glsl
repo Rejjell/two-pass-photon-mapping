@@ -1,4 +1,4 @@
-#extension GL_ARB_texture_rectangle : enable
+﻿#extension GL_ARB_texture_rectangle : enable
 
 #ifndef PHOTON_MAP
 	struct SCamera
@@ -450,14 +450,17 @@ void main ( void )
 			final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
 			intersect.Time = BIG;
 			
+			/*
 			vec3 d=ray.Direction;
 			vec3 pos= intersect.Point;
 			vec3 normal=intersect.Normal;
 			vec3 reflectDir = d- (2*dot(normal,d)) *normal;
-
 			ray.Origin=  pos;
-			ray.Direction = reflectDir;
+			ray.Direction = reflectDir;*/
 
+			// Raytrace ( ray, EPSILON, final, intersect, trace );
+
+			//Отраженный луч
 			if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 			{
 				#ifndef PHOTON_MAP
