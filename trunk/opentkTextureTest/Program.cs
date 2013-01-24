@@ -54,8 +54,8 @@ namespace StarterKit
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
 
             frameBuffer = new FrameBuffer(mapWidth, mapHeight);
-            LightDirectionAllocation(); 
-
+            LightDirectionAllocation();
+            RandomDirs();
         }
 
 
@@ -109,9 +109,30 @@ namespace StarterKit
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, allocation);
             
-            float[] fpix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
+           // float[] fpix = new float[mapWidth * mapHeight * 3];
+          //  GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
         }
+
+        uint randomTexture;
+
+        private void RandomDirs()
+        {
+            Random r = new Random();
+            float[] rnd = new float[mapWidth * mapHeight * 3];
+            int n = mapWidth * mapHeight;
+            for (int k = 0; k < n; k++)
+            {
+                rnd[3 * k] =(float) r.NextDouble();
+                rnd[3 * k + 1] = (float)r.NextDouble();
+                rnd[3 * k + 2] = (float)r.NextDouble();
+            }
+
+            GL.GenTextures(1, out randomTexture);
+            GL.BindTexture(TextureTarget.TextureRectangle, randomTexture);
+            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
+                         PixelType.Float, rnd);
+        }
+
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
@@ -160,6 +181,12 @@ namespace StarterKit
         private void RayTracingUniformSet()
         {
             renderShader.Activate();
+
+            GL.BindTexture(TextureTarget.TextureRectangle, randomTexture);
+            photonShader.SetUniformTextureRect(randomTexture, "RandomTexture");
+            GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
+
+
                 renderShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 renderShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 renderShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, -3.0F));
