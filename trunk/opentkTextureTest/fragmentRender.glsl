@@ -449,22 +449,14 @@ void main ( void )
 			ray = SRay ( intersect.Point, refract );
 			final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
 			intersect.Time = BIG;
-
 			
 			vec3 d=ray.Direction;
 			vec3 pos= intersect.Point;
-			
 			vec3 normal=intersect.Normal;
-			
-			//vec3 normal= vec3(1,0,0);
-			
 			vec3 reflectDir = d- (2*dot(normal,d)) *normal;
 
 			ray.Origin=  pos;
 			ray.Direction = reflectDir;
-
-			/*ray.Origin=  pos+0.001*reflectDir;
-			ray.Direction =normal;*/
 
 			if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 			{
