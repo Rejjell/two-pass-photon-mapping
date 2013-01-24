@@ -545,10 +545,7 @@ void main ( void )
 		//gl_FragColor = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	#else
 		gl_FragColor = vec4 ( color, 1.0 );
-		vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
-		 gl_FragColor = vec4(d,1);
-		//vec4 tex =texture2DRect(AllocationTexture, vec2(10, 10));
-		//if (texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40)).x!=0)
-		//gl_FragColor = vec4(0,1,0,1) ; 
+		//vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+		// gl_FragColor = vec4(d,1);
 	#endif
 }
