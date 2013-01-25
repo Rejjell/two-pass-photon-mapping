@@ -22,8 +22,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 80;
-        int mapHeight = 80;
+        int mapWidth = 100;
+        int mapHeight = 100;
 
         float PhotonIntensity = 100.0F;
 
@@ -89,15 +89,24 @@ namespace StarterKit
             float inc = (float)Math.PI * (3 - (float)Math.Sqrt(5));
             float off = 2.0f/n;
 
+        /*
             for (int k = 0; k < n; k++)
             {
-                float y = k*off - 1 + (off/2);
-                float r = (float)Math.Sqrt(1 - y*y);
-                float phi = k*inc;
-                allocation[3*k] = (float)Math.Cos(phi)*r;
-                allocation[3*k + 1] = y;
+                float y = k * off - 1 + (off / 2);
+                float r = (float)Math.Sqrt(1 - y * y);
+                float phi = k * inc;
+                allocation[3 * k] = (float)Math.Cos(phi) * r;
+                allocation[3 * k + 1] = y;
                 allocation[3 * k + 2] = (float)Math.Sin(phi) * r;
             }
+            */
+             var r = new Random();
+             for (int k = 0; k < n; k++)
+             {
+                 allocation[3 * k] = (float)r.NextDouble() * 2 - 1;
+                 allocation[3 * k + 1] = (float)r.NextDouble() * 2 -1;
+                 allocation[3 * k + 2] = (float)r.NextDouble() * 2 - 1;
+             }
 
             GL.GenTextures(1, out allocationTexture);
             GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
@@ -115,16 +124,23 @@ namespace StarterKit
             Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
             float[] rnd = new float[mapWidth * mapHeight * 3];
             int n = mapWidth * mapHeight;
-            for (int k = 0; k < n; k++)
+            /*for (int k = 0; k < n; k++)
             {
-               /* rnd[3 * k] =(float) r.NextDouble();
-                rnd[3 * k + 1] = (float)r.NextDouble();
-                rnd[3 * k + 2] = (float)r.NextDouble();*/
-
-                rnd[3*k] = (float) r.NextDouble()*4 - 2;
+                rnd[3 * k] = (float)r.NextDouble() * 4 - 2;
                 rnd[3 * k + 1] = 4.9f;
-                rnd[3*k + 2] = (float) r.NextDouble()*4 - 2;
-            }
+                rnd[3 * k + 2] = (float)r.NextDouble() * 4 - 2;
+
+            }*/
+
+            for (var i = 0; i < 80; i++)
+                for (var j = 0; j < 80; j++)
+                {
+                    rnd[(i * 80 + j) * 3] = -2 + 4 / (float)Math.Sqrt(6400) * i;
+                    rnd[(i * 80 + j) * 3 + 1] = 4.9f;
+                    rnd[(i * 80 + j) * 3 + 2] = -2 + 4 / (float)Math.Sqrt(6400) * j;
+                }
+            
+
 
             GL.GenTextures(1, out squareLightPointsTexture);
             GL.BindTexture(TextureTarget.TextureRectangle, squareLightPointsTexture);
