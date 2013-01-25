@@ -169,19 +169,33 @@ SRay GenerateRay ( void )
 	float theta=-(gl_TexCoord[0].y+1.0)*PI/2;
 	vec3 direction = vec3(sqrt(1-u*u)*cos(theta),sqrt(1-u*u)*sin(theta), u);*/
 	vec3 direction = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
-	vec3 pos = texture2DRect(SquareLightTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
-	return SRay ( /*Light.Position*/ pos, normalize ( direction ) );
-
+	vec3 position = texture2DRect(SquareLightTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+	return SRay ( position, normalize ( direction ) );
 #else
 	vec2 coords = gl_TexCoord[0].xy * Camera.Scale;
 	vec3 direction = Camera.View + Camera.Side * coords.x + Camera.Up * coords.y;
 
-	//vec3 pos = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+	vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 
 	return SRay ( Camera.Position, normalize ( direction ) );
 
 #endif
 }
+
+vec3 Refract ( vec3 incident, vec3 normal, float index )		
+	{		
+		float dot = dot ( incident, normal );		
+		float square = 1.0 - index * index * ( 1.0 - dot * dot );		
+			
+		if ( square < 0.0 )		
+		{		
+			return reflect ( incident, normal );		
+		}		
+		else		
+		{		
+			return index * incident - ( sqrt ( square ) + index * dot ) * normal;		
+		}		
+	}
 
 #ifndef PHOTON_MAP
 	vec3 Phong ( SIntersection intersect )
@@ -312,7 +326,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			//refract=true;
 		#endif
 
-		refract =false;// true;
+		refract = false;
 
 		result = true;
 	}
@@ -329,7 +343,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		#endif
 
 		result = true;
-		refract = false;//true;
+		refract = false;
 	}
 
 	if ( IntersectPlane ( ray, AxisZ, BoxMinimum.z, start, final, test ) && test < intersect.Time )
@@ -437,8 +451,14 @@ void main ( void )
 		{
 			//color +=0.8;
 
-			vec3 refractDirection =reflect ( ray.Direction,
+			/*vec3 refractDirection =reflect ( ray.Direction,
 										intersect.Normal );
+			*/
+
+			vec3 refractDirection = Refract ( ray.Direction,
+				                     mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
+									 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+
 			air = !air; 
 			ray = SRay ( intersect.Point, refractDirection );
 			final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
@@ -465,8 +485,13 @@ void main ( void )
 				
 				if ( trace )
 				{
-					refractDirection = reflect ( ray.Direction,
-										intersect.Normal );
+					/*refractDirection = reflect ( ray.Direction,
+										intersect.Normal );*/
+
+					vec3 refractDirection = Refract ( ray.Direction,
+				         mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
+						 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+					
 
 					air = !air; ray = SRay ( intersect.Point, refractDirection );
 					final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); intersect.Time = BIG;
@@ -481,8 +506,14 @@ void main ( void )
 
 						if ( trace )
 						{
-							refractDirection = reflect ( ray.Direction,
-										intersect.Normal );
+							/*refractDirection = reflect ( ray.Direction,
+										intersect.Normal );*/
+
+							vec3 refractDirection = Refract ( ray.Direction,
+				             mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
+							 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+
+
 							air = !air; ray = SRay ( intersect.Point, refractDirection );
 							final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); intersect.Time = BIG;
 
