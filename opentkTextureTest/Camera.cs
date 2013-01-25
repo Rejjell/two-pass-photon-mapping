@@ -7,7 +7,7 @@ using OpenTK;
 
 namespace StarterKit
 {
-    class MyCamera
+    class Camera
     {
         private Vector3 position;
         private Vector3 view;
@@ -17,7 +17,7 @@ namespace StarterKit
 
         private float movementSpeed = 0.1f;
 
-        public MyCamera()
+        public Camera()
         {
             position = new Vector3(0.0F, 0.0F, -21.0F);
             view = new Vector3(0.0F, 0.0F, 1.0F);

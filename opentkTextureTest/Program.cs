@@ -9,7 +9,7 @@ namespace StarterKit
 {
     class Game : GameWindow
     {
-        MyCamera camera = new MyCamera();
+        Camera camera = new Camera();
 
         Shader renderShader;
         Shader photonShader;
@@ -20,8 +20,6 @@ namespace StarterKit
         
         static int w = 800;
         static int h = 800;
-
-        private float angle;
 
         int mapWidth = 80;
         int mapHeight = 80;
@@ -48,8 +46,6 @@ namespace StarterKit
             GL.LoadIdentity();
             GL.Viewport(0, 0, w, h);
 
-            angle = 0.0f;
-
             renderShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "");
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
 
@@ -57,8 +53,6 @@ namespace StarterKit
             LightDirectionAllocation();
             RandomDirs();
         }
-
-
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
@@ -168,9 +162,9 @@ namespace StarterKit
                 photonShader.SetUniformTextureRect(allocationTexture, "AllocationTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
-                photonShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, -3.0F));
+                photonShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, 0.0F));
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
-                photonShader.SetUniform("MatSphere.Center", new Vector3(0.0F, -4.0F, 3.0F));
+                photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
                 photonShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 4.9F, 0.0F/* + (float)Math.Cos(angle)*/));
                 photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
@@ -182,16 +176,15 @@ namespace StarterKit
         {
             renderShader.Activate();
 
-            GL.BindTexture(TextureTarget.TextureRectangle, randomTexture);
-            photonShader.SetUniformTextureRect(randomTexture, "RandomTexture");
-            GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
-
+                GL.BindTexture(TextureTarget.TextureRectangle, randomTexture);
+                photonShader.SetUniformTextureRect(randomTexture, "RandomTexture");
+                GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
 
                 renderShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 renderShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
-                renderShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, -3.0F));
+                renderShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, 0.0F));
                 renderShader.SetUniform("GlassSphere.Radius", 2.0F);
-                renderShader.SetUniform("MatSphere.Center", new Vector3(0.0F, -4.0F, 3.0F));
+                renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 renderShader.SetUniform("MatSphere.Radius", 1.0F);
                 renderShader.SetUniform("Light.Position", new Vector3(0.0F/* + (float)Math.Sin(angle)*/, 4.9F, 0.0F/* + (float)Math.Cos(angle)*/));
 
@@ -229,8 +222,6 @@ namespace StarterKit
 
         private void PhotonMapping()
         {
-            GL.Viewport(0, 0, mapWidth, mapHeight);
-
             photonShader.Activate();
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-40, -40);
@@ -254,7 +245,6 @@ namespace StarterKit
 
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, pixSorted);
-
         }
         
 
