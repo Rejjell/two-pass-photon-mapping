@@ -15,6 +15,8 @@ namespace StarterKit
         Shader photonShader;
 
         FrameBuffer frameBuffer;
+        FrameBuffer frameBuffer1;
+
 
         private uint allocationTexture;
         private uint randomTexture;
@@ -51,6 +53,7 @@ namespace StarterKit
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
 
             frameBuffer = new FrameBuffer(mapWidth, mapHeight);
+            
             LightDirectionAllocation();
             SquareLightPoints();
         }
@@ -89,13 +92,18 @@ namespace StarterKit
             float inc = (float)Math.PI * (3 - (float)Math.Sqrt(5));
             float off = 2.0f/n;
 
+            //Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
+
             for (int k = 0; k < n; k++)
             {
                 float y = k*off - 1 + (off/2);
                 float r = (float)Math.Sqrt(1 - y*y);
                 float phi = k*inc;
-                allocation[3*k] = (float)Math.Cos(phi)*r;
-                allocation[3*k + 1] = y;
+                /*allocation[3 * k] = (float)r.NextDouble()*2-1;
+                allocation[3 * k + 1] = (float)r.NextDouble()*2-1;
+                allocation[3 * k + 2] = (float)r.NextDouble()*2-1;*/
+                allocation[3 * k] = (float)Math.Cos(phi) * r;
+                allocation[3 * k + 1] = y;
                 allocation[3 * k + 2] = (float)Math.Sin(phi) * r;
             }
 
@@ -117,14 +125,25 @@ namespace StarterKit
             int n = mapWidth * mapHeight;
             for (int k = 0; k < n; k++)
             {
-               /* rnd[3 * k] =(float) r.NextDouble();
-                rnd[3 * k + 1] = (float)r.NextDouble();
-                rnd[3 * k + 2] = (float)r.NextDouble();*/
-
-                rnd[3*k] = (float) r.NextDouble()*4 - 2;
+                rnd[3 * k] = 0;
                 rnd[3 * k + 1] = 4.9f;
-                rnd[3*k + 2] = (float) r.NextDouble()*4 - 2;
+                rnd[3 * k + 2] = 0;
+
+                /*rnd[3*k] = (float) r.NextDouble()*4 - 2;
+                rnd[3 * k + 1] = 4.9f;
+                rnd[3*k + 2] = (float) r.NextDouble()*4 - 2;*/
             }
+
+            /*float[] rnd = new float[mapWidth * mapHeight * 3];
+            for (var i = 0; i < 80; i++)
+                for (var j = 0; j < 80; j++)
+                {
+                    rnd[(i*80 + j)*3] = -2 + 4/(float) Math.Sqrt(6400)*i;
+                    rnd[(i*80 + j)*3 + 1] = 4.9f;
+                    rnd[(i*80 + j)*3 + 2] = -2 + 4/(float) Math.Sqrt(6400)*j;
+                }*/
+
+
 
             GL.GenTextures(1, out squareLightPointsTexture);
             GL.BindTexture(TextureTarget.TextureRectangle, squareLightPointsTexture);
@@ -147,15 +166,23 @@ namespace StarterKit
             PhotonMapping();
             frameBuffer.Deactivate();
             
-            /*GL.ActiveTexture(TextureUnit.Texture1);
+            GL.ActiveTexture(TextureUnit.Texture1);
             GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
             float[] pix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);*/
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
             
             PhotonMapSort();
-            
+
+            //frameBuffer1 = new FrameBuffer(w, h);
+            //frameBuffer1.Activate();
             renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture0, "PhotonTexture");
             RayTracing();
+            //frameBuffer1.Deactivate();
+
+            /*GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer1.GetTexture());
+            float[] pix1 = new float[w * h * 3];
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);*/
 
             SwapBuffers();
 
@@ -177,6 +204,7 @@ namespace StarterKit
                 photonShader.SetUniform("Light.Position", new Vector3(0.0F, 4.9F, 0.0F));
                 photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
                 photonShader.SetUniform("Light.Distance", 0.5F * 10);
+                photonShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
             photonShader.Deactivate();
         }
 
@@ -217,10 +245,10 @@ namespace StarterKit
             
             renderShader.Activate();
                 GL.Begin(BeginMode.Quads);
-                GL.Vertex2(-400, -400);
-                GL.Vertex2(400, -400);
-                GL.Vertex2(400, 400);
-                GL.Vertex2(-400, 400);
+                GL.Vertex2(-w/2, -h/2);
+                GL.Vertex2(w/2, -h/2);
+                GL.Vertex2(w/2, h/2);
+                GL.Vertex2(-w/2, h/2);
                 GL.End();
             renderShader.Deactivate();
         }
@@ -229,10 +257,10 @@ namespace StarterKit
         {
             photonShader.Activate();
                 GL.Begin(BeginMode.Quads);
-                GL.Vertex2(-40, -40);
-                GL.Vertex2(40, -40);
-                GL.Vertex2(40, 40);
-                GL.Vertex2(-40, 40);
+                GL.Vertex2(-mapWidth / 2, -mapHeight / 2);
+                GL.Vertex2(mapWidth / 2, -mapHeight / 2);
+                GL.Vertex2(mapWidth / 2, mapHeight / 2);
+                GL.Vertex2(-mapWidth / 2, mapHeight / 2);
                 GL.End();
             photonShader.Deactivate();
         }
