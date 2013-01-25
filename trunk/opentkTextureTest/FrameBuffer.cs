@@ -11,8 +11,10 @@ namespace StarterKit
 {
     class FrameBuffer
     {
-        uint FboHandle;
-        uint ColorTexture;
+        private uint FboHandle;
+        private uint ColorTexture;
+        private int mapWidth;
+        private int mapHeight;
 
         public FrameBuffer(int mapWidth,int mapHeight)
         {
@@ -30,38 +32,26 @@ namespace StarterKit
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, FboHandle);
             GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.TextureRectangleArb, ColorTexture, 0);
 
-            GL.DrawBuffer((DrawBufferMode)FramebufferAttachment.ColorAttachment0Ext);
-
-            GL.PushAttrib(AttribMask.ViewportBit);
-            GL.Viewport(0, 0, mapWidth, mapHeight);
-
-            GL.PopAttrib();
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
-            GL.DrawBuffer(DrawBufferMode.Back);
+
+            this.mapWidth = mapWidth;
+            this.mapHeight = mapHeight;
         }
 
         public void Activate()
         {
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, FboHandle);
+            GL.Viewport(0, 0, mapWidth, mapHeight);
         }
 
         public void Deactivate()
         {
-            GL.PopAttrib();
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
-            GL.DrawBuffer(DrawBufferMode.Back);
         }
 
         public uint GetTexture()
         {
             return ColorTexture;
         }
-
-        public void DeleteTexture()
-        {
-            GL.DeleteTexture(ColorTexture);
-        }
-
-
     }
 }

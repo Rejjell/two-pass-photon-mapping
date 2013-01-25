@@ -51,7 +51,7 @@ struct RectangleLightStruct
 	float Length;
 };
 
-#define TRACE_DEPTH_1
+#define TRACE_DEPTH_2
 // Sets number of secondary rays ( from 1 to 3 )
 
 const float GlassAirIndex = 4.5;							// Ratio of refraction indices of glass and air
@@ -180,21 +180,6 @@ SRay GenerateRay ( void )
 #endif
 }
 
-vec3 Refract ( vec3 incident, vec3 normal, float index )
-{
-	float dot = dot ( incident, normal );
-	float square = 1.0 - index * index * ( 1.0 - dot * dot );
-
-	if ( square < 0.0 )
-	{
-		return reflect ( incident, normal );
-	}
-	else
-	{
-		return index * incident - ( sqrt ( square ) + index * dot ) * normal;
-	}
-}
-
 #ifndef PHOTON_MAP
 	vec3 Phong ( SIntersection intersect )
 	{
@@ -279,7 +264,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	
 		#endif
 
-
+		refract = false;
 		result = true;
 	}
 
@@ -305,7 +290,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 				intersect.Material = WallMaterial;
 			}
 		#endif
-
+		refract = false;
 		result = true;
 	}
 
@@ -324,7 +309,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			//refract=true;
 		#endif
 
-		//refract = true;
+		refract = true;
 
 		result = true;
 	}
@@ -341,6 +326,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		#endif
 
 		result = true;
+		refract = true;
 	}
 
 	if ( IntersectPlane ( ray, AxisZ, BoxMinimum.z, start, final, test ) && test < intersect.Time )
@@ -353,6 +339,8 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			intersect.Color = DefaultWallsColor;//Wall
 			intersect.Material = WallMaterial;
 		#endif
+
+		refract = false;
 
 		result = true;
 	}
@@ -368,6 +356,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			intersect.Material = WallMaterial;
 		#endif
 
+		refract = false;
 		result = true;
 	}
 
@@ -382,9 +371,6 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		#ifndef PHOTON_MAP
 			intersect.Color = GlassColor;
 			intersect.Material = GlassMaterial;
-			/*intersect.Color = MatColor;
-			intersect.Material = MatMaterial;*/
-
 		#endif
 
 		refract = true;
@@ -401,6 +387,8 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			intersect.Color = MatColor;
 			intersect.Material = MatMaterial;
 		#endif
+		
+		
 		refract = false;
 		result = true;
 
@@ -446,11 +434,10 @@ void main ( void )
 		{
 			//color +=0.8;
 
-			vec3 refract = Refract ( ray.Direction,
-				                     mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-									 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+			vec3 refractDirection =reflect ( ray.Direction,
+										intersect.Normal );
 			air = !air; 
-			ray = SRay ( intersect.Point, refract );
+			ray = SRay ( intersect.Point, refractDirection );
 			final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
 			intersect.Time = BIG;
 			
@@ -468,40 +455,38 @@ void main ( void )
 			if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 			{
 				#ifndef PHOTON_MAP
-					color +=  GlassColor * Phong ( intersect );
+					color +=  GlassColor * Phong ( intersect )*0.05;
 				#endif
 
 				#ifndef TRACE_DEPTH_1
-
+				
 				if ( trace )
 				{
-					refract = Refract ( ray.Direction,
-										mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-										mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+					refractDirection = reflect ( ray.Direction,
+										intersect.Normal );
 
-					air = !air; ray = SRay ( intersect.Point, refract );
+					air = !air; ray = SRay ( intersect.Point, refractDirection );
 					final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); intersect.Time = BIG;
 
 					if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 					{
 						#ifndef PHOTON_MAP
-							color += GlassColor * Phong ( intersect );
+							color += GlassColor * Phong ( intersect )*0.025;
 						#endif
 						
 						#ifndef TRACE_DEPTH_2
 
 						if ( trace )
 						{
-							refract = Refract ( ray.Direction,
-												mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-												mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
-							air = !air; ray = SRay ( intersect.Point, refract );
+							refractDirection = reflect ( ray.Direction,
+										intersect.Normal );
+							air = !air; ray = SRay ( intersect.Point, refractDirection );
 							final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); intersect.Time = BIG;
 
 							if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 							{
 								#ifndef PHOTON_MAP
-									color += GlassColor * Phong ( intersect );
+									color += GlassColor * Phong ( intersect )*0.0125;
 
 									if ( !trace )
 									{
