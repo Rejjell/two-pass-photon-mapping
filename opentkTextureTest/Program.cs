@@ -121,9 +121,9 @@ namespace StarterKit
                 rnd[3 * k + 1] = (float)r.NextDouble();
                 rnd[3 * k + 2] = (float)r.NextDouble();*/
 
-                rnd[3 * k] =  ((float)r.NextDouble() - 0.5f)/1;
+                rnd[3*k] = (float) r.NextDouble()*4 - 2;
                 rnd[3 * k + 1] = 4.9f;
-                rnd[3 * k + 2] = ((float)r.NextDouble() - 0.5f) / 1;
+                rnd[3*k + 2] = (float) r.NextDouble()*4 - 2;
             }
 
             GL.GenTextures(1, out squareLightPointsTexture);
@@ -147,12 +147,13 @@ namespace StarterKit
             PhotonMapping();
             frameBuffer.Deactivate();
             
-            //float[] pix = new float[mapWidth * mapHeight * 3];
-            //GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
+            GL.ActiveTexture(TextureUnit.Texture2);
+            float[] pix = new float[mapWidth * mapHeight * 3];
+            GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
             
             PhotonMapSort();
             
-            renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), "PhotonTexture");
+            renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture0, "PhotonTexture");
             RayTracing();
 
             SwapBuffers();
@@ -164,11 +165,11 @@ namespace StarterKit
         private void PhotonMappingUniformSet()
         {
             photonShader.Activate();
-                photonShader.SetUniformTextureRect(allocationTexture, "AllocationTexture");
-                photonShader.SetUniformTextureRect(squareLightPointsTexture, "SquareLightTexture");
+                photonShader.SetUniformTextureRect(allocationTexture, TextureUnit.Texture0,  "AllocationTexture");
+                photonShader.SetUniformTextureRect(squareLightPointsTexture, TextureUnit.Texture1, "SquareLightTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
-                photonShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, 0.0F));
+                photonShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
                 photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
@@ -188,7 +189,7 @@ namespace StarterKit
             
                 renderShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 renderShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
-                renderShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, 0.0F));
+                renderShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
                 renderShader.SetUniform("GlassSphere.Radius", 2.0F);
                 renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 renderShader.SetUniform("MatSphere.Radius", 1.0F);
