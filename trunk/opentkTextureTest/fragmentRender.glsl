@@ -90,10 +90,11 @@ uniform SSphere GlassSphere;
 uniform SSphere MatSphere;	
 uniform RectangleLightStruct RectangleLight;		
 
+uniform vec2 PhotonMapSize;
 
 #ifndef PHOTON_MAP
 	uniform SCamera Camera;							// Camera parameters
-	uniform vec2 PhotonMapSize;						// Size of photon map
+							// Size of photon map
 	uniform float PhotonIntensity;					// Intensity of single photon
 	uniform float Delta;							// Radius of vicinity for gathering of photons
 	uniform float InverseDelta;						// Inverse radius for fast calculations
@@ -168,14 +169,15 @@ SRay GenerateRay ( void )
 	/*float u=gl_TexCoord[0].x;
 	float theta=-(gl_TexCoord[0].y+1.0)*PI/2;
 	vec3 direction = vec3(sqrt(1-u*u)*cos(theta),sqrt(1-u*u)*sin(theta), u);*/
-	vec3 direction = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
-	vec3 position = texture2DRect(SquareLightTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
-	return SRay ( position, normalize ( direction ) );
+	vec3 direction = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+	//vec3 position = texture2DRect(SquareLightTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+	return SRay ( Light.Position, normalize ( direction ) );
+	
 #else
 	vec2 coords = gl_TexCoord[0].xy * Camera.Scale;
 	vec3 direction = Camera.View + Camera.Side * coords.x + Camera.Up * coords.y;
 
-	vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+	vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 
 	return SRay ( Camera.Position, normalize ( direction ) );
 
@@ -225,12 +227,14 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		float left = 0.0;
 		float right = PhotonMapSize.x * PhotonMapSize.y;
 		float center;
-    
+
+		vec3 position =texture2DRect ( PhotonTexture,	vec2 (40f,40f)).xyz; 
 		while ( left < right )
 		{
 			center = 0.5 * ( left + right );
-			vec3 position = texture2DRect ( PhotonTexture,
-				vec2 ( mod ( center, PhotonMapSize.x ), floor ( center / PhotonMapSize.y ) ) ).xyz; 
+
+			position = texture2DRect ( PhotonTexture,	vec2 ( mod ( center, PhotonMapSize.x ), floor ( center / PhotonMapSize.y ))).xyz; 
+		
 
 			if ( Compare ( point, position ) )
 			{
@@ -239,7 +243,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 			else
 			{
 				right = center - 1.0;
-			}        
+			}   
 		 }
 	
 		return center;
@@ -420,6 +424,9 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 
 void main ( void )
 {
+
+
+
 	SRay ray = GenerateRay ( );
 	float start, final;
 
@@ -438,22 +445,59 @@ void main ( void )
 		vec3 color = Zero;
 	#endif
 
-	bool trace = false;
+	bool trace = true;
 	bool air = true;
 
+	int depth = 2;
+
+	int rayCount = 0;
+
+	while ((rayCount<=depth)&&(trace))
+	{
+		if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
+		{
+			#ifndef PHOTON_MAP
+				color += Phong ( intersect );
+			#endif
+
+			if (trace)
+			{
+				vec3 refractDirection = Refract ( ray.Direction,
+				                     mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
+									 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+
+				air = !air; 
+				ray = SRay ( intersect.Point, refractDirection );
+				final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
+				intersect.Time = BIG;
+
+			}
+			else
+			{
+				#ifndef PHOTON_MAP
+					Caustic ( intersect, color );
+				#endif
+			}
+			
+		}
+	}
+
+	
+	/*
 	if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 	{
 		#ifndef PHOTON_MAP
 			color += Phong ( intersect );
 		#endif
 
+		
 		if ( trace )
 		{
 			//color +=0.8;
 
 			/*vec3 refractDirection =reflect ( ray.Direction,
 										intersect.Normal );
-			*/
+			
 
 			vec3 refractDirection = Refract ( ray.Direction,
 				                     mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
@@ -470,7 +514,7 @@ void main ( void )
 			vec3 normal=intersect.Normal;
 			vec3 reflectDir = d- (2*dot(normal,d)) *normal;
 			ray.Origin=  pos;
-			ray.Direction = reflectDir;*/
+			ray.Direction = reflectDir;
 
 			// Raytrace ( ray, EPSILON, final, intersect, trace );
 
@@ -486,7 +530,7 @@ void main ( void )
 				if ( trace )
 				{
 					/*refractDirection = reflect ( ray.Direction,
-										intersect.Normal );*/
+										intersect.Normal );
 
 					vec3 refractDirection = Refract ( ray.Direction,
 				         mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
@@ -507,7 +551,7 @@ void main ( void )
 						if ( trace )
 						{
 							/*refractDirection = reflect ( ray.Direction,
-										intersect.Normal );*/
+										intersect.Normal );
 
 							vec3 refractDirection = Refract ( ray.Direction,
 				             mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
@@ -556,15 +600,18 @@ void main ( void )
 				Caustic ( intersect, color );
 			#endif
 		}
-	}   // Tracing primary ray
+	} */  // Tracing primary ray
 
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
 		//gl_FragColor = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	#else
+		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
 		gl_FragColor = vec4 ( color, 1.0 );
-		//vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+		//vec3 d = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 		// gl_FragColor = vec4(d,1);
+		//gl_FragColor = vec4(0.0,0.0,1.0,0.0);
+
 	#endif
 }
