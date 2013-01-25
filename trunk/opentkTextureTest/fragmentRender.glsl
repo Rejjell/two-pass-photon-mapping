@@ -51,7 +51,7 @@ struct RectangleLightStruct
 	float Length;
 };
 
-#define TRACE_DEPTH_1
+#define TRACE_DEPTH_2
 // Sets number of secondary rays ( from 1 to 3 )
 
 const float GlassAirIndex = 4.5;							// Ratio of refraction indices of glass and air
@@ -437,9 +437,8 @@ void main ( void )
 		{
 			//color +=0.8;
 
-			vec3 refractDirection =refract ( ray.Direction,
-										mix(-intersect.Normal, intersect.Normal, (float)air ),
-										mix(GlassAirIndex, AirGlassIndex, (float)air));
+			vec3 refractDirection =reflect ( ray.Direction,
+										intersect.Normal );
 			air = !air; 
 			ray = SRay ( intersect.Point, refractDirection );
 			final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
@@ -461,7 +460,7 @@ void main ( void )
 				#ifndef PHOTON_MAP
 					color +=  GlassColor * Phong ( intersect )*0.05;
 				#endif
-				/*
+
 				#ifndef TRACE_DEPTH_1
 				
 				if ( trace )
@@ -517,7 +516,7 @@ void main ( void )
 					#endif
 				}
 
-				#endif*/
+				#endif
 			}   // Tracing 1 secondary ray
 		}   // If water
 		else
@@ -531,7 +530,7 @@ void main ( void )
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
-		//gl_FragColor = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+		//gl_FragColor = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	#else
 		gl_FragColor = vec4 ( color, 1.0 );
 		//vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
