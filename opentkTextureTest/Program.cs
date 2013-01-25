@@ -141,7 +141,7 @@ namespace StarterKit
             PhotonMappingUniformSet();
             RayTracingUniformSet();
 
-            
+            //GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
             //angle += 0.1f;
             frameBuffer.Activate();
             PhotonMapping();
