@@ -531,7 +531,7 @@ void main ( void )
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
-		//gl_FragColor = texture2DRect(SquareLightTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
+		//gl_FragColor = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	#else
 		gl_FragColor = vec4 ( color, 1.0 );
 		//vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));

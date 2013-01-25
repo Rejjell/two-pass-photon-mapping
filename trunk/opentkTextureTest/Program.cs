@@ -147,9 +147,10 @@ namespace StarterKit
             PhotonMapping();
             frameBuffer.Deactivate();
             
-            GL.ActiveTexture(TextureUnit.Texture2);
+            GL.ActiveTexture(TextureUnit.Texture1);
+            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
             float[] pix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangleArb, 0, PixelFormat.Rgb, PixelType.Float, pix);
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
             
             PhotonMapSort();
             
@@ -183,10 +184,7 @@ namespace StarterKit
         {
             renderShader.Activate();
 
-           // GL.BindTexture(TextureTarget.TextureRectangle, squareLightPointsTexture);
-           // photonShader.SetUniformTextureRect(randomTexture, "RandomTexture");
-                GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
-            
+    
                 renderShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 renderShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 renderShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
@@ -241,6 +239,7 @@ namespace StarterKit
 
         private void PhotonMapSort()
         {
+            GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
 
             float[] pix = new float[mapWidth * mapHeight * 3];
