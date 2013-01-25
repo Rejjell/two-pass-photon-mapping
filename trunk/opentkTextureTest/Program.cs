@@ -17,6 +17,7 @@ namespace StarterKit
         FrameBuffer frameBuffer;
 
         private uint allocationTexture;
+        private uint randomTexture;
         
         static int w = 800;
         static int h = 800;
@@ -51,7 +52,7 @@ namespace StarterKit
 
             frameBuffer = new FrameBuffer(mapWidth, mapHeight);
             LightDirectionAllocation();
-            RandomDirs();
+            SquareLightPoints();
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -107,22 +108,26 @@ namespace StarterKit
           //  GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
         }
 
-        uint randomTexture;
+        uint squareLightPointsTexture;
 
-        private void RandomDirs()
+        private void SquareLightPoints()
         {
-            Random r = new Random();
+            Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
             float[] rnd = new float[mapWidth * mapHeight * 3];
             int n = mapWidth * mapHeight;
             for (int k = 0; k < n; k++)
             {
-                rnd[3 * k] =(float) r.NextDouble();
+               /* rnd[3 * k] =(float) r.NextDouble();
                 rnd[3 * k + 1] = (float)r.NextDouble();
-                rnd[3 * k + 2] = (float)r.NextDouble();
+                rnd[3 * k + 2] = (float)r.NextDouble();*/
+
+                rnd[3 * k] =  ((float)r.NextDouble() - 0.5f)/1;
+                rnd[3 * k + 1] = 4.9f;
+                rnd[3 * k + 2] = ((float)r.NextDouble() - 0.5f) / 1;
             }
 
-            GL.GenTextures(1, out randomTexture);
-            GL.BindTexture(TextureTarget.TextureRectangle, randomTexture);
+            GL.GenTextures(1, out squareLightPointsTexture);
+            GL.BindTexture(TextureTarget.TextureRectangle, squareLightPointsTexture);
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, rnd);
         }
@@ -160,6 +165,7 @@ namespace StarterKit
         {
             photonShader.Activate();
                 photonShader.SetUniformTextureRect(allocationTexture, "AllocationTexture");
+                photonShader.SetUniformTextureRect(squareLightPointsTexture, "SquareLightTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 photonShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, 0.0F));
@@ -176,10 +182,10 @@ namespace StarterKit
         {
             renderShader.Activate();
 
-                GL.BindTexture(TextureTarget.TextureRectangle, randomTexture);
-                photonShader.SetUniformTextureRect(randomTexture, "RandomTexture");
+           // GL.BindTexture(TextureTarget.TextureRectangle, squareLightPointsTexture);
+           // photonShader.SetUniformTextureRect(randomTexture, "RandomTexture");
                 GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
-
+            
                 renderShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 renderShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 renderShader.SetUniform("GlassSphere.Center", new Vector3(0.0F, -3.0F, 0.0F));
