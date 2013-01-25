@@ -109,10 +109,12 @@ namespace StarterKit
             GL.UseProgram(0);
         }
 
-        public void SetUniformTextureRect(uint textureId, string UniformName)
+        public void SetUniformTextureRect(uint textureId, TextureUnit textureUnit, string UniformName)
         {
+            GL.ActiveTexture(textureUnit);
             GL.BindTexture(TextureTarget.TextureRectangle, textureId);
-            GL.Uniform1(GL.GetUniformLocation(program, UniformName), (float)TextureUnit.Texture0);
+            GL.Uniform1(GL.GetUniformLocation(program, UniformName), textureUnit-TextureUnit.Texture0);
+            GL.ActiveTexture(TextureUnit.Texture0);
         }
 
     }
