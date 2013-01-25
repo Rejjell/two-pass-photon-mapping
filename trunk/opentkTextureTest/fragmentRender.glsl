@@ -298,7 +298,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			  &&(intersect.Point.z<(RectangleLight.Center.y + RectangleLight.Length/2))
 			  &&(intersect.Point.z>(RectangleLight.Center.y - RectangleLight.Length/2)))
 			{
-				intersect.Color =  RectangleLight.Color;//Ceiling
+				intersect.Color = RectangleLight.Color;//Ceiling
 				intersect.Material = WallMaterial;
 			}
 			else
@@ -444,12 +444,7 @@ void main ( void )
 	if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 	{
 		#ifndef PHOTON_MAP
-
-			//if IntersectSphere ( ray, start, final, test, MatSphere ) 
-						color += Phong ( intersect );
-
-
-
+			color += Phong ( intersect );
 		#endif
 
 		if ( trace )
@@ -485,12 +480,13 @@ void main ( void )
 				#ifndef PHOTON_MAP
 					color +=  GlassColor * Phong ( intersect )*0.05;
 				#endif
-				/*
+
 				#ifndef TRACE_DEPTH_1
 				
 				if ( trace )
 				{
-					//refractDirection = reflect ( ray.Direction,intersect.Normal );
+					/*refractDirection = reflect ( ray.Direction,
+										intersect.Normal );*/
 
 					vec3 refractDirection = Refract ( ray.Direction,
 				         mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
@@ -510,7 +506,8 @@ void main ( void )
 
 						if ( trace )
 						{
-							//refractDirection = reflect ( ray.Direction,intersect.Normal );
+							/*refractDirection = reflect ( ray.Direction,
+										intersect.Normal );*/
 
 							vec3 refractDirection = Refract ( ray.Direction,
 				             mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
@@ -550,7 +547,7 @@ void main ( void )
 					#endif
 				}
 
-				#endif*/
+				#endif
 			}   // Tracing 1 secondary ray
 		}   // If water
 		else
