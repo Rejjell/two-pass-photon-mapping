@@ -62,7 +62,7 @@ namespace StarterKit
             photonRefletionDirectionsTexture1 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
-            //randomProbabilityTexture = GenerateRandomTexture();
+            randomProbabilityTexture = GenerateRandomTexture(0,1);
 
             
         }
@@ -191,6 +191,10 @@ namespace StarterKit
             photonShader.Activate();
                 photonShader.SetUniformTextureRect(photonEmissionDirectionsTexture, TextureUnit.Texture0,  "PhotonEmissionDirectionsTexture");
                 photonShader.SetUniformTextureRect(rectangleLightPointsTexture, TextureUnit.Texture1, "RectangleLightPointsTexture");
+                photonShader.SetUniformTextureRect(photonRefletionDirectionsTexture1, TextureUnit.Texture2, "PhotonRefletionDirectionsTexture1");
+                photonShader.SetUniformTextureRect(photonRefletionDirectionsTexture2, TextureUnit.Texture3, "PhotonRefletionDirectionsTexture2");
+                photonShader.SetUniformTextureRect(photonRefletionDirectionsTexture3, TextureUnit.Texture4, "PhotonRefletionDirectionsTexture3");
+                photonShader.SetUniformTextureRect(randomProbabilityTexture, TextureUnit.Texture5, "RandomProbabilityTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 photonShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
