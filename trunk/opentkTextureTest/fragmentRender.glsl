@@ -1,4 +1,6 @@
-﻿#extension GL_ARB_texture_rectangle : enable
+﻿//#version 130
+
+#extension GL_ARB_texture_rectangle : enable
 
 #ifndef PHOTON_MAP
 	struct SCamera
@@ -228,12 +230,11 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		float right = PhotonMapSize.x * PhotonMapSize.y;
 		float center;
 
-		vec3 position =texture2DRect ( PhotonTexture,	vec2 (40f,40f)).xyz; 
 		while ( left < right )
 		{
 			center = 0.5 * ( left + right );
 
-			position = texture2DRect ( PhotonTexture,	vec2 ( mod ( center, PhotonMapSize.x ), floor ( center / PhotonMapSize.y ))).xyz; 
+			vec3 position = texture2DRect ( PhotonTexture,	vec2 ( mod ( center, PhotonMapSize.x ), floor ( center / PhotonMapSize.y ))).xyz; 
 		
 
 			if ( Compare ( point, position ) )
@@ -277,12 +278,11 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	{
 		intersect.Time = test;
 		intersect.Point = ray.Origin + ray.Direction * test;
+		intersect.Normal = AxisY;
 
 		#ifndef PHOTON_MAP
-			intersect.Normal = AxisY;
 			intersect.Color = DefaultWallsColor;//Bottom
 			intersect.Material = FloorMaterial;
-	
 		#endif
 
 		refract = false;
@@ -293,9 +293,9 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	{
 		intersect.Time = test;
 		intersect.Point = ray.Origin + ray.Direction * test;
-
+		intersect.Normal = -AxisY;
+		
 		#ifndef PHOTON_MAP
-			intersect.Normal = -AxisY;
 		
 			if ((intersect.Point.x<(RectangleLight.Center.x + RectangleLight.Width/2))
 			  &&(intersect.Point.x>(RectangleLight.Center.x - RectangleLight.Width/2))
@@ -320,14 +320,11 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	{
 		intersect.Time = test;
 		intersect.Point = ray.Origin + ray.Direction * test;
-		//intersect.Normal = vec3 (1,0,0);
-		
+		intersect.Normal = AxisX;
 
 		#ifndef PHOTON_MAP
-			intersect.Normal = AxisX;
 			intersect.Color = LeftWallColor;//Wall
 			intersect.Material = WallMaterial;
-			//refract=true;
 		#endif
 
 		refract = false;
@@ -339,9 +336,10 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	{
 		intersect.Time = test;
 		intersect.Point = ray.Origin + ray.Direction * test;
+		intersect.Normal = -AxisX;
 
 		#ifndef PHOTON_MAP
-			intersect.Normal = -AxisX;
+			
 			intersect.Color = RightWallColor;//Wall
 			intersect.Material = WallMaterial;
 		#endif
@@ -354,9 +352,9 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	{
 		intersect.Time = test;
 		intersect.Point = ray.Origin + ray.Direction * test;
+		intersect.Normal = AxisZ;
 
 		#ifndef PHOTON_MAP
-			intersect.Normal = AxisZ;
 			intersect.Color = DefaultWallsColor;//Wall
 			intersect.Material = WallMaterial;
 		#endif
@@ -370,9 +368,9 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	{
 		intersect.Time = test;
 		intersect.Point = ray.Origin + ray.Direction * test;
+		intersect.Normal = -AxisZ;
 
 		#ifndef PHOTON_MAP
-			intersect.Normal = -AxisZ;
 			intersect.Color = DefaultWallsColor;//Wall
 			intersect.Material = WallMaterial;
 		#endif
@@ -425,8 +423,6 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 void main ( void )
 {
 
-
-
 	SRay ray = GenerateRay ( );
 	float start, final;
 
@@ -449,38 +445,32 @@ void main ( void )
 	bool air = true;
 
 	int depth = 2;
-
 	int rayCount = 0;
 
-	while ((rayCount<=depth)&&(trace))
-	{
+	while ((rayCount<=depth)&&trace)
 		if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 		{
 			#ifndef PHOTON_MAP
 				color += Phong ( intersect );
 			#endif
 
-			if (trace)
+			if (trace&&(rayCount<depth))
 			{
-				vec3 refractDirection = Refract ( ray.Direction,
-				                     mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-									 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+				vec3 refractDirection = reflect ( ray.Direction, intersect.Normal);
 
 				air = !air; 
 				ray = SRay ( intersect.Point, refractDirection );
 				final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
 				intersect.Time = BIG;
+			}
 
-			}
-			else
-			{
-				#ifndef PHOTON_MAP
-					Caustic ( intersect, color );
-				#endif
-			}
-			
+			rayCount++;
 		}
-	}
+
+	#ifndef PHOTON_MAP
+		if (rayCount > 0)
+			Caustic ( intersect, color );
+	#endif
 
 	
 	/*
