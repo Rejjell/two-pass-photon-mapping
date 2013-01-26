@@ -156,21 +156,9 @@ bool IntersectSphere ( SRay ray, float start, float final, out float time, SSphe
 	return false;
 }
 
-float RND_1d(vec2 x)
-{
-	uint n = floatBitsToUint(x.y * 214013.0 + x.x * 2531011.0);
-	n = n * (n * n * 15731u + 789221u);
-	n = (n >> 9u) | 0x3F800000u;
-
-	return 2.0 - uintBitsToFloat(n);
-}
-
 SRay GenerateRay ( void )
 {
 #ifdef PHOTON_MAP
-	/*float u=gl_TexCoord[0].x;
-	float theta=-(gl_TexCoord[0].y+1.0)*PI/2;
-	vec3 direction = vec3(sqrt(1-u*u)*cos(theta),sqrt(1-u*u)*sin(theta), u);*/
 	vec3 direction = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	//vec3 position = texture2DRect(SquareLightTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	return SRay ( Light.Position, normalize ( direction ) );
@@ -267,6 +255,18 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 	}
 #endif
 
+void SetIntersection(SRay ray, inout SIntersection intersect, vec3 normal, vec3 color, vec4 material, float test)
+{
+	intersect.Time = test;
+	intersect.Point = ray.Origin + ray.Direction * test;
+	intersect.Normal = normal;
+
+	#ifndef PHOTON_MAP
+		intersect.Color = color;//Bottom
+		intersect.Material = material;
+	#endif
+}
+
 bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect, out bool refract )
 {
 	bool result = false;
@@ -276,14 +276,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 
 	if ( IntersectPlane ( ray, AxisY, BoxMinimum.y, start, final, test ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = AxisY;
-
-		#ifndef PHOTON_MAP
-			intersect.Color = DefaultWallsColor;//Bottom
-			intersect.Material = FloorMaterial;
-		#endif
+		SetIntersection(ray, intersect, AxisY, DefaultWallsColor, FloorMaterial, test);
 
 		refract = false;
 		result = true;
@@ -291,26 +284,16 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 
 	if ( IntersectPlane ( ray, AxisY, BoxMaximum.y, start, final, test ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = -AxisY;
-		
-		#ifndef PHOTON_MAP
-		
-			if ((intersect.Point.x<(RectangleLight.Center.x + RectangleLight.Width/2))
-			  &&(intersect.Point.x>(RectangleLight.Center.x - RectangleLight.Width/2))
-			  &&(intersect.Point.z<(RectangleLight.Center.y + RectangleLight.Length/2))
-			  &&(intersect.Point.z>(RectangleLight.Center.y - RectangleLight.Length/2)))
-			{
-				intersect.Color = RectangleLight.Color;//Ceiling
-				intersect.Material = WallMaterial;
-			}
+		vec3 point = ray.Origin + ray.Direction * test;
+
+			if ((point.x<(RectangleLight.Center.x + RectangleLight.Width/2))
+			  &&(point.x>(RectangleLight.Center.x - RectangleLight.Width/2))
+			  &&(point.z<(RectangleLight.Center.y + RectangleLight.Length/2))
+			  &&(point.z>(RectangleLight.Center.y - RectangleLight.Length/2)))
+				SetIntersection(ray, intersect, -AxisY, RectangleLight.Color, WallMaterial, test);
 			else
-			{
-				intersect.Color = DefaultWallsColor;//Ceiling
-				intersect.Material = WallMaterial;
-			}
-		#endif
+				SetIntersection(ray, intersect, -AxisY, DefaultWallsColor, WallMaterial, test);
+
 		refract = false;
 		result = true;
 	}
@@ -318,62 +301,31 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	
 	if ( IntersectPlane ( ray, AxisX, BoxMinimum.x, start, final, test ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = AxisX;
-
-		#ifndef PHOTON_MAP
-			intersect.Color = LeftWallColor;//Wall
-			intersect.Material = WallMaterial;
-		#endif
+		SetIntersection(ray, intersect, AxisX, LeftWallColor, WallMaterial, test);
 
 		refract = false;
-
 		result = true;
 	}
 
 	if ( IntersectPlane ( ray, AxisX, BoxMaximum.x, start, final, test ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = -AxisX;
-
-		#ifndef PHOTON_MAP
-			
-			intersect.Color = RightWallColor;//Wall
-			intersect.Material = WallMaterial;
-		#endif
-
+		SetIntersection(ray, intersect, -AxisX, RightWallColor, WallMaterial, test);
+		
 		result = true;
 		refract = false;
 	}
 
 	if ( IntersectPlane ( ray, AxisZ, BoxMinimum.z, start, final, test ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = AxisZ;
-
-		#ifndef PHOTON_MAP
-			intersect.Color = DefaultWallsColor;//Wall
-			intersect.Material = WallMaterial;
-		#endif
+		SetIntersection(ray, intersect, AxisZ, DefaultWallsColor, WallMaterial, test);
 
 		refract = false;
-
 		result = true;
 	}
 	
 	if ( IntersectPlane ( ray, AxisZ, BoxMaximum.z, start, final, test ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = -AxisZ;
-
-		#ifndef PHOTON_MAP
-			intersect.Color = DefaultWallsColor;//Wall
-			intersect.Material = WallMaterial;
-		#endif
+		SetIntersection(ray, intersect, -AxisZ, DefaultWallsColor, WallMaterial, test);
 
 		refract = false;
 		result = true;
@@ -383,14 +335,8 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 
 	if ( IntersectSphere ( ray, start, final, test, GlassSphere ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = normalize ( intersect.Point - GlassSphere.Center );
-
-		#ifndef PHOTON_MAP
-			intersect.Color = GlassColor;
-			intersect.Material = GlassMaterial;
-		#endif
+		vec3 normal = normalize ( (ray.Origin + ray.Direction * test) - GlassSphere.Center ); //Intersect.Point - GlassSphere.Center
+		SetIntersection(ray, intersect, normal, GlassColor, GlassMaterial, test);
 
 		refract = true;
 		result = true;
@@ -398,24 +344,13 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 
 	if ( IntersectSphere ( ray, start, final, test, MatSphere ) && test < intersect.Time )
 	{
-		intersect.Time = test;
-		intersect.Point = ray.Origin + ray.Direction * test;
-		intersect.Normal = normalize ( intersect.Point - MatSphere.Center );
-
-		#ifndef PHOTON_MAP
-			intersect.Color = MatColor;
-			intersect.Material = MatMaterial;
-		#endif
-		
+		vec3 normal = normalize ( ray.Origin + ray.Direction * test - MatSphere.Center );
+		SetIntersection(ray, intersect, normal, MatColor,MatMaterial, test);
 		
 		refract = false;
 		result = true;
 
 	}
-
-
-
-	//refract = true;
 
 	return result;
 }
@@ -472,136 +407,10 @@ void main ( void )
 			Caustic ( intersect, color );
 	#endif
 
-	
-	/*
-	if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
-	{
-		#ifndef PHOTON_MAP
-			color += Phong ( intersect );
-		#endif
-
-		
-		if ( trace )
-		{
-			//color +=0.8;
-
-			/*vec3 refractDirection =reflect ( ray.Direction,
-										intersect.Normal );
-			
-
-			vec3 refractDirection = Refract ( ray.Direction,
-				                     mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-									 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
-
-			air = !air; 
-			ray = SRay ( intersect.Point, refractDirection );
-			final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
-			intersect.Time = BIG;
-			
-			/*
-			vec3 d=ray.Direction;
-			vec3 pos= intersect.Point;
-			vec3 normal=intersect.Normal;
-			vec3 reflectDir = d- (2*dot(normal,d)) *normal;
-			ray.Origin=  pos;
-			ray.Direction = reflectDir;
-
-			// Raytrace ( ray, EPSILON, final, intersect, trace );
-
-			//Отраженный луч
-			if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
-			{
-				#ifndef PHOTON_MAP
-					color +=  GlassColor * Phong ( intersect )*0.05;
-				#endif
-
-				#ifndef TRACE_DEPTH_1
-				
-				if ( trace )
-				{
-					/*refractDirection = reflect ( ray.Direction,
-										intersect.Normal );
-
-					vec3 refractDirection = Refract ( ray.Direction,
-				         mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-						 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
-					
-
-					air = !air; ray = SRay ( intersect.Point, refractDirection );
-					final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); intersect.Time = BIG;
-
-					if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
-					{
-						#ifndef PHOTON_MAP
-							color += GlassColor * Phong ( intersect )*0.025;
-						#endif
-						
-						#ifndef TRACE_DEPTH_2
-
-						if ( trace )
-						{
-							/*refractDirection = reflect ( ray.Direction,
-										intersect.Normal );
-
-							vec3 refractDirection = Refract ( ray.Direction,
-				             mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-							 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
-
-
-							air = !air; ray = SRay ( intersect.Point, refractDirection );
-							final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); intersect.Time = BIG;
-
-							if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
-							{
-								#ifndef PHOTON_MAP
-									color += GlassColor * Phong ( intersect )*0.0125;
-
-									if ( !trace )
-									{
-										Caustic ( intersect, color );
-									}
-
-								#endif
-							}   // Tracing 3 secondary ray
-						}   // If water
-						else
-						{
-							#ifndef PHOTON_MAP
-								Caustic ( intersect, color );
-							#endif
-						}
-
-						#endif
-					}   // Tracing 2 secondary ray
-				}   // If water
-				else
-				{
-					#ifndef PHOTON_MAP
-						Caustic ( intersect, color );
-					#endif
-				}
-
-				#endif
-			}   // Tracing 1 secondary ray
-		}   // If water
-		else
-		{
-			#ifndef PHOTON_MAP
-				Caustic ( intersect, color );
-			#endif
-		}
-	} */  // Tracing primary ray
-
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
-		//gl_FragColor = vec4 ( gl_TexCoord[0].x, gl_TexCoord[0].y,0.0,0.0 );
-		//gl_FragColor = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
 	#else
 		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
 		gl_FragColor = vec4 ( color, 1.0 );
-		//vec3 d = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*40, (gl_TexCoord[0].y+1)*40));
-		// gl_FragColor = vec4(d,1);
-		//gl_FragColor = vec4(0.0,0.0,1.0,0.0);
-
 	#endif
 }
