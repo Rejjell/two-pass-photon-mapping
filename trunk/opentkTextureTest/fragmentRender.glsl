@@ -80,6 +80,7 @@ const vec3 MirrorX = vec3 ( -1.0, 1.0, 1.0 );
 const vec3 MirrorY = vec3 ( 1.0, -1.0, 1.0 );
 const vec3 MirrorZ = vec3 ( 1.0, 1.0, -1.0 );
 
+
 #define BIG 1000000.0
 #define EPSILON 0.01
 #define PI 3.14159265
@@ -163,7 +164,9 @@ SRay GenerateRay ( void )
 {
 #ifdef PHOTON_MAP
 	vec3 direction = vec3(0.0,-1.0,0.0) + texture2DRect(PhotonEmissionDirectionsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
-	vec3 position = texture2DRect(RectangleLightPointsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)))*2.0;
+	vec3 position = texture2DRect(RectangleLightPointsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+	position.x *= RectangleLight.Width/2.0;
+	position.z *= RectangleLight.Length/2.0;
 	//gl_FragColor = vec4 ( direction, 0.0 );
 	position.y = Light.Position.y-0.01;
 	return SRay ( position, normalize ( direction ) );
@@ -271,6 +274,8 @@ void SetIntersection(SRay ray, inout SIntersection intersect, vec3 normal, vec3 
 	#endif
 }
 
+
+
 bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect, out bool refract )
 {
 	bool result = false;
@@ -356,6 +361,29 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	return result;
 }
 
+#ifdef PHOTON_MAP
+	float[3] PhotonProbabilitiesInitialization()
+	{
+		float[3] probabilities;
+		vec3 p = texture2DRect(RandomProbabilityTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+		probabilities[0] = p.x;
+		probabilities[1] = p.y;
+		probabilities[2] = p.z;
+
+		return probabilities;
+	}
+
+	vec3[3] PhotonReflectionDirectionsInitialization()
+	{
+		vec3[3] directions;
+		directions[0] = texture2DRect(PhotonRefletionDirectionsTexture1, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+		directions[1] = texture2DRect(PhotonRefletionDirectionsTexture2, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+		directions[2] = texture2DRect(PhotonRefletionDirectionsTexture3, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+
+		return directions;
+	}
+#endif
+
 void main ( void )
 {
 
@@ -383,13 +411,15 @@ void main ( void )
 	int depth = 2;
 	int rayCount = 0;
 
+
+
 	while ((rayCount<=depth)&&trace)
 		if ( Raytrace ( ray, EPSILON, final, intersect, trace ) )
 		{
 			#ifndef PHOTON_MAP
 				color += Phong ( intersect );
 			#else
-				trace = true;
+				
 			#endif
 
 			
