@@ -32,6 +32,8 @@ namespace StarterKit
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, FboHandle);
             GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.TextureRectangleArb, ColorTexture, 0);
 
+            
+
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
 
             this.mapWidth = mapWidth;
