@@ -1,6 +1,4 @@
-﻿//#version 130
-
-#extension GL_ARB_texture_rectangle : enable
+﻿#extension GL_ARB_texture_rectangle : enable
 
 #ifndef PHOTON_MAP
 	struct SCamera
