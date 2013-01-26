@@ -17,9 +17,12 @@ namespace StarterKit
         FrameBuffer frameBuffer;
         FrameBuffer frameBuffer1;
 
-
-        private uint allocationTexture;
-        private uint randomTexture;
+        private uint rectangleLightPointsTexture;
+        private uint photonEmissionDirectionsTexture;
+        private uint photonRefletionDirectionsTexture1;
+        private uint photonRefletionDirectionsTexture2;
+        private uint photonRefletionDirectionsTexture3;
+        private uint randomProbabilityTexture;
         
         static int w = 800;
         static int h = 800;
@@ -53,9 +56,15 @@ namespace StarterKit
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
 
             frameBuffer = new FrameBuffer(mapWidth, mapHeight);
+
+            rectangleLightPointsTexture = GenerateRandomTexture(-1,1);
+            photonEmissionDirectionsTexture = GenerateRandomDirectionsTexture();
+            photonRefletionDirectionsTexture1 = GenerateRandomDirectionsTexture();
+            photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
+            photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
+            //randomProbabilityTexture = GenerateRandomTexture();
+
             
-            LightDirectionAllocation();
-            SquareLightPoints();
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -84,73 +93,60 @@ namespace StarterKit
         }
         
 
-        private void LightDirectionAllocation()
+        private uint GenerateRandomTexture(float a, float b)
         {
-            float[] allocation = new float[mapWidth * mapHeight * 3];
+            float[] randomArray = new float[mapWidth * mapHeight * 3];
 
-            int n = mapWidth*mapHeight;
-            float inc = (float)Math.PI * (3 - (float)Math.Sqrt(5));
-            float off = 2.0f/n;
-
-            //Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
-
-            for (int k = 0; k < n; k++)
-            {
-                float y = k*off - 1 + (off/2);
-                float r = (float)Math.Sqrt(1 - y*y);
-                float phi = k*inc;
-                /*allocation[3 * k] = (float)r.NextDouble()*2-1;
-                allocation[3 * k + 1] = (float)r.NextDouble()*2-1;
-                allocation[3 * k + 2] = (float)r.NextDouble()*2-1;*/
-                allocation[3 * k] = (float)Math.Cos(phi) * r;
-                allocation[3 * k + 1] = y;
-                allocation[3 * k + 2] = (float)Math.Sin(phi) * r;
-            }
-
-            GL.GenTextures(1, out allocationTexture);
-            GL.BindTexture(TextureTarget.TextureRectangle, allocationTexture);
-            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
-                         PixelType.Float, allocation);
-            
-           // float[] fpix = new float[mapWidth * mapHeight * 3];
-          //  GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
-        }
-
-        uint squareLightPointsTexture;
-
-        private void SquareLightPoints()
-        {
             Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
-            float[] rnd = new float[mapWidth * mapHeight * 3];
-            int n = mapWidth * mapHeight;
-            for (int k = 0; k < n; k++)
-            {
-                rnd[3 * k] = 0;
-                rnd[3 * k + 1] = 4.9f;
-                rnd[3 * k + 2] = 0;
 
-                /*rnd[3*k] = (float) r.NextDouble()*4 - 2;
-                rnd[3 * k + 1] = 4.9f;
-                rnd[3*k + 2] = (float) r.NextDouble()*4 - 2;*/
+            for (int k = 0; k < mapWidth*mapHeight*3; k+=3)
+            {
+                randomArray[k] = (float) r.NextDouble()*(b - a) + a;
+                randomArray[k + 1] = (float) r.NextDouble()*(b - a) + a;
+                randomArray[k + 2] = (float) r.NextDouble()*(b - a) + a;
             }
 
-            /*float[] rnd = new float[mapWidth * mapHeight * 3];
-            for (var i = 0; i < 80; i++)
-                for (var j = 0; j < 80; j++)
-                {
-                    rnd[(i*80 + j)*3] = -2 + 4/(float) Math.Sqrt(6400)*i;
-                    rnd[(i*80 + j)*3 + 1] = 4.9f;
-                    rnd[(i*80 + j)*3 + 2] = -2 + 4/(float) Math.Sqrt(6400)*j;
-                }*/
-
-
-
-            GL.GenTextures(1, out squareLightPointsTexture);
-            GL.BindTexture(TextureTarget.TextureRectangle, squareLightPointsTexture);
+            uint texture;
+            GL.GenTextures(1, out texture);
+            GL.BindTexture(TextureTarget.TextureRectangle, texture);
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
-                         PixelType.Float, rnd);
+                         PixelType.Float, randomArray);
+            
+            float[] fpix = new float[mapWidth * mapHeight * 3];
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
+
+            return texture;
         }
 
+        private uint GenerateRandomDirectionsTexture()
+        {
+            float[] randomArray = new float[mapWidth * mapHeight * 3];
+
+            Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
+
+            for (int k = 0; k < mapWidth * mapHeight * 3; k += 3)
+            {
+                float x = (float)r.NextDouble()*2 - 1;
+                float y = (float)((r.NextDouble() * 2 - 1)*Math.Sqrt(1-x*x));
+                float z = (float) Math.Sqrt(1 - x*x - y*y);
+                float p = (float)r.NextDouble();
+                if (p > 0.5f) z = -z;
+                randomArray[k] = x;
+                randomArray[k + 1] = y;
+                randomArray[k + 2] = z;
+            }
+
+            uint texture;
+            GL.GenTextures(1, out texture);
+            GL.BindTexture(TextureTarget.TextureRectangle, texture);
+            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
+                         PixelType.Float, randomArray);
+
+            float[] fpix = new float[mapWidth * mapHeight * 3];
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
+
+            return texture;
+        }
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
@@ -193,15 +189,15 @@ namespace StarterKit
         private void PhotonMappingUniformSet()
         {
             photonShader.Activate();
-                photonShader.SetUniformTextureRect(allocationTexture, TextureUnit.Texture0,  "AllocationTexture");
-                photonShader.SetUniformTextureRect(squareLightPointsTexture, TextureUnit.Texture1, "SquareLightTexture");
+                photonShader.SetUniformTextureRect(photonEmissionDirectionsTexture, TextureUnit.Texture0,  "PhotonEmissionDirectionsTexture");
+                photonShader.SetUniformTextureRect(rectangleLightPointsTexture, TextureUnit.Texture1, "RectangleLightPointsTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 photonShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
                 photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
-                photonShader.SetUniform("Light.Position", new Vector3(0.0F, 0.0F, 0.0F));
+                photonShader.SetUniform("Light.Position", new Vector3(0.0F, 5.0F, 0.0F));
                 photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
                 photonShader.SetUniform("Light.Distance", 0.5F * 10);
                 photonShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
@@ -211,15 +207,13 @@ namespace StarterKit
         private void RayTracingUniformSet()
         {
             renderShader.Activate();
-
-    
                 renderShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 renderShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 renderShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
                 renderShader.SetUniform("GlassSphere.Radius", 2.0F);
                 renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 renderShader.SetUniform("MatSphere.Radius", 1.0F);
-                renderShader.SetUniform("Light.Position", new Vector3(0.0F, 0.0F, 0.0F));
+                renderShader.SetUniform("Light.Position", new Vector3(0.0F, 5.0F, 0.0F));
 
                 renderShader.SetUniform("Delta", 1.0F);
                 renderShader.SetUniform("InverseDelta", 1.0F / 1.0F);
@@ -233,7 +227,7 @@ namespace StarterKit
                 renderShader.SetUniform("Camera.Scale", camera.GetScale());
 
                 renderShader.SetUniform("RectangleLight.Center", new Vector2(0.0F, 0.0F));
-                renderShader.SetUniform("RectangleLight.Color", new Vector3(1.0F, 0.0F, 0.0F));
+                renderShader.SetUniform("RectangleLight.Color", new Vector3(1.0F, 1.0F, 1.0F));
                 renderShader.SetUniform("RectangleLight.Length", 4.0F);
                 renderShader.SetUniform("RectangleLight.Width", 4.0F);
             renderShader.Deactivate();
@@ -280,7 +274,6 @@ namespace StarterKit
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, pixSorted);
         }
-        
 
         [STAThread]
         static void Main()

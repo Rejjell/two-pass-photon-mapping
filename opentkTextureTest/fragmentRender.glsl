@@ -68,7 +68,6 @@ const vec3 DefaultWallsColor = vec3 (1.0,0.6,0.25);
 const vec4 GlassMaterial = vec4 ( 0.1, 0.1, 0.6, 128.0 );
 const vec4 MatMaterial = vec4 ( 0.1, 1.0, 0.05, 8.0 );	// Glass material ( ambient, diffuse and specular coeffs )
 const vec4 WallMaterial = vec4 ( 0.1, 0.8, 0.1, 32.0 );		// Wall material ( ambient, diffuse and specular coeffs )
-const vec4 FloorMaterial = vec4 ( 0.0, 0.5, 0.3, 32.0 );	// Floor material ( ambient, diffuse and specular coeffs )
 
 const vec3 Zero = vec3 ( 0.0, 0.0, 0.0 );
 const vec3 Unit = vec3 ( 1.0, 1.0, 1.0 );
@@ -101,10 +100,14 @@ uniform vec2 PhotonMapSize;
 	uniform float Delta;							// Radius of vicinity for gathering of photons
 	uniform float InverseDelta;						// Inverse radius for fast calculations
 	uniform sampler2DRect PhotonTexture;
-	uniform sampler2DRect RandomTexture;
+
 #else
-	uniform sampler2DRect AllocationTexture;
-	uniform sampler2DRect SquareLightTexture;
+	uniform sampler2DRect PhotonEmissionDirectionsTexture;
+	uniform sampler2DRect PhotonRefletionDirectionsTexture1;
+	uniform sampler2DRect PhotonRefletionDirectionsTexture2;
+	uniform sampler2DRect PhotonRefletionDirectionsTexture3;
+	uniform sampler2DRect RectangleLightPointsTexture;
+	uniform sampler2DRect RandomProbabilityTexture;
 #endif
 
 
@@ -159,15 +162,16 @@ bool IntersectSphere ( SRay ray, float start, float final, out float time, SSphe
 SRay GenerateRay ( void )
 {
 #ifdef PHOTON_MAP
-	vec3 direction = texture2DRect(AllocationTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
-	//vec3 position = texture2DRect(SquareLightTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
-	return SRay ( Light.Position, normalize ( direction ) );
+	vec3 direction = vec3(0.0,-1.0,0.0) + texture2DRect(PhotonEmissionDirectionsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+	vec3 position = texture2DRect(RectangleLightPointsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)))*2.0;
+	//gl_FragColor = vec4 ( direction, 0.0 );
+	position.y = Light.Position.y-0.01;
+	return SRay ( position, normalize ( direction ) );
+	
 	
 #else
 	vec2 coords = gl_TexCoord[0].xy * Camera.Scale;
 	vec3 direction = Camera.View + Camera.Side * coords.x + Camera.Up * coords.y;
-
-	vec3 d = texture2DRect(RandomTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 
 	return SRay ( Camera.Position, normalize ( direction ) );
 
@@ -276,7 +280,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 
 	if ( IntersectPlane ( ray, AxisY, BoxMinimum.y, start, final, test ) && test < intersect.Time )
 	{
-		SetIntersection(ray, intersect, AxisY, DefaultWallsColor, FloorMaterial, test);
+		SetIntersection(ray, intersect, AxisY, DefaultWallsColor, WallMaterial, test);
 
 		refract = false;
 		result = true;
@@ -331,8 +335,6 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		result = true;
 	}
 
-	//refract = false;
-
 	if ( IntersectSphere ( ray, start, final, test, GlassSphere ) && test < intersect.Time )
 	{
 		vec3 normal = normalize ( (ray.Origin + ray.Direction * test) - GlassSphere.Center ); //Intersect.Point - GlassSphere.Center
@@ -349,7 +351,6 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		
 		refract = false;
 		result = true;
-
 	}
 
 	return result;
@@ -387,7 +388,11 @@ void main ( void )
 		{
 			#ifndef PHOTON_MAP
 				color += Phong ( intersect );
+			#else
+				trace = true;
 			#endif
+
+			
 
 			if (trace&&(rayCount<depth))
 			{
