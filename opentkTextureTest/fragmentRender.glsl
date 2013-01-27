@@ -206,15 +206,24 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 #ifndef PHOTON_MAP
 	vec3 Phong ( SIntersection intersect )
 	{
-		vec3 light = normalize ( Light.Position - intersect.Point );
+		vec3 lightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
+		//vec3 lightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2(0,0));
+
+		lightPosition.x *= 2;
+		lightPosition.y = 5.0;
+		lightPosition.z *= 2;
+
+
+		//vec3 light = normalize ( Light.Position - intersect.Point );
+		vec3 light = normalize ( lightPosition - intersect.Point );
 		vec3 view = normalize ( Camera.Position - intersect.Point );
 		float diffuse = max ( dot ( light, intersect.Normal ), 0.0 );
 		vec3 reflection = reflect ( -view, intersect.Normal );
 		float specular = pow ( max ( dot ( reflection, light ), 0.0 ), intersect.Material.w );
 
-		return intersect.Material.x * Unit +
-			   intersect.Material.y * diffuse * intersect.Color +
-			   intersect.Material.z * specular * Unit;
+		return //intersect.Material.x * Unit +
+			   intersect.Material.y * diffuse * intersect.Color;// +
+			   //intersect.Material.z * specular * Unit;
 	}
 
 	bool Compare ( vec3 left, vec3 right )
@@ -516,6 +525,12 @@ void main ( void )
 	#else
 		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
 		gl_FragColor = vec4 ( color, 1.0 );
-		gl_FragColor = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+		//gl_FragColor = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
+	
+		/*vec3 lightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
+		lightPosition.x *= 2.0;
+		lightPosition.y = 5.0;
+		lightPosition.z *= 2.0;
+		gl_FragColor = vec4(lightPosition,1.0);*/
 	#endif
 }
