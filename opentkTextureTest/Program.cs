@@ -27,8 +27,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 80;
-        int mapHeight = 80;
+        int mapWidth = 20;
+        int mapHeight = 20;
 
         float PhotonIntensity = 100.0F;
 
@@ -57,12 +57,25 @@ namespace StarterKit
 
             frameBuffer = new FrameBuffer(mapWidth, mapHeight);
 
-            rectangleLightPointsTexture = GenerateRandomTexture(-1,1);
+            /*rectangleLightPointsTexture = GenerateRandomTexture(-1,1);
             photonEmissionDirectionsTexture = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture1 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
             randomProbabilityTexture = GenerateRandomTexture(0,1);
+
+            PhotonMappingUniformSet();
+
+            frameBuffer.Activate();
+            PhotonMapping();
+            frameBuffer.Deactivate();
+
+            GL.ActiveTexture(TextureUnit.Texture1);
+            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
+            float[] pix = new float[mapWidth * mapHeight * 3];
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
+
+            PhotonMapSort();*/
 
             
         }
@@ -126,14 +139,14 @@ namespace StarterKit
 
             for (int k = 0; k < mapWidth * mapHeight * 3; k += 3)
             {
-                float x = (float)r.NextDouble()*2 - 1;
+                /*float x = (float)r.NextDouble()*2 - 1;
                 float y = (float)((r.NextDouble() * 2 - 1)*Math.Sqrt(1-x*x));
                 float z = (float) Math.Sqrt(1 - x*x - y*y);
                 float p = (float)r.NextDouble();
-                if (p > 0.5f) z = -z;
-                randomArray[k] = x;
-                randomArray[k + 1] = y;
-                randomArray[k + 2] = z;
+                if (p > 0.5f) z = -z;*/
+                randomArray[k] = (float)r.NextDouble() * 2 - 1;
+                randomArray[k + 1] = (float)r.NextDouble() * 2 - 1;
+                randomArray[k + 2] = (float)r.NextDouble() * 2 - 1;
             }
 
             uint texture;
@@ -153,21 +166,12 @@ namespace StarterKit
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
-            PhotonMappingUniformSet();
+            
             RayTracingUniformSet();
 
             //GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
             //angle += 0.1f;
-            frameBuffer.Activate();
-            PhotonMapping();
-            frameBuffer.Deactivate();
             
-            GL.ActiveTexture(TextureUnit.Texture1);
-            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
-            float[] pix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
-            
-            PhotonMapSort();
 
             //frameBuffer1 = new FrameBuffer(w, h);
             //frameBuffer1.Activate();
