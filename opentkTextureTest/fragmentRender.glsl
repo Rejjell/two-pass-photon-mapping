@@ -322,7 +322,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		SetIntersection(ray, intersect, AxisX, LeftWallColor, GlassMaterial, test);
 
 		refraction = false;
-		reflection = true;
+		reflection = false;
 		result = true;
 	}
 
@@ -331,7 +331,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		SetIntersection(ray, intersect, -AxisX, RightWallColor, GlassMaterial, test);
 		
 		result = true;
-		reflection = true;
+		reflection = false;
 		refraction = false;
 	}
 
@@ -430,6 +430,8 @@ void main ( void )
 		vec3[3] directions = PhotonReflectionDirectionsInitialization();
 	#else
 		vec3 color = Zero;
+		vec3 mainColor = Zero;
+		vec3 secondaryColor = Zero;
 	#endif
 
 	bool continueTracing = true;
@@ -440,29 +442,18 @@ void main ( void )
 	#ifdef PHOTON_MAP
 		int depth = 2;
 	#else
-		int depth = 4;
+		int depth = 10;
 	#endif 
 
 	int rayCount = 0;
 
+
+
 	
 
 	while ((rayCount<=depth)&&continueTracing)
-		if ( Raytrace ( ray, EPSILON, final, intersect, reflection, refraction ) )
-		{
-			continueTracing = reflection || refraction;
-
-			#ifndef PHOTON_MAP
-				if (rayCount > 0)
-					color += Phong ( intersect );
-				else
-					color = Phong ( intersect );
-			#else
-				if (!continueTracing)
-					continueTracing = (probabilities[rayCount] < intersect.Material.z);
-			#endif
-
-			if (continueTracing&&(rayCount<depth))
+	{
+		if (rayCount > 0)
 			{
 				vec3 direction;
 
@@ -486,10 +477,29 @@ void main ( void )
 				intersect.Time = BIG;
 			}
 
+
+		if ( Raytrace ( ray, EPSILON, final, intersect, reflection, refraction ) )
+		{
+			continueTracing = reflection || refraction;
+
+			#ifndef PHOTON_MAP
+				if (rayCount = 0)
+					mainColor = Phong ( intersect );
+				else
+					secondaryColor += Phong ( intersect );
+			#else
+				if (!continueTracing)
+					continueTracing = (probabilities[rayCount] < intersect.Material.z);
+				
+			#endif
+
+			
+
 			rayCount++;
 		}
 		else
 			continueTracing = false;
+	}
 
 	
 	#ifndef PHOTON_MAP
@@ -499,8 +509,10 @@ void main ( void )
 
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
+		//gl_FragColor = texture2DRect(RandomProbabilityTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#else
 		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
-		gl_FragColor = vec4 ( color, 1.0 );
+		//gl_FragColor = vec4 ( color, 1.0 );
+		gl_FragColor =  texture2DRect(PhotonTexture, vec2(15,15));
 	#endif
 }
