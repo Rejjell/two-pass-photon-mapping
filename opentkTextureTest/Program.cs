@@ -64,7 +64,7 @@ namespace StarterKit
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
             randomProbabilityTexture = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
-            p = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
+            p = GenerateRandomTexture(0, 1, 800, 800);
 
             PhotonMappingUniformSet();
 
@@ -110,11 +110,11 @@ namespace StarterKit
 
         private uint GenerateRandomTexture(float a, float b,int w, int h)
         {
-            float[] randomArray = new float[mapWidth * mapHeight * 3];
+            float[] randomArray = new float[w * h * 3];
 
             Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
 
-            for (int k = 0; k < mapWidth*mapHeight*3; k+=3)
+            for (int k = 0; k < w*h*3; k+=3)
             {
                 randomArray[k] = (float) r.NextDouble()*(b - a) + a;
                 randomArray[k + 1] = (float) r.NextDouble()*(b - a) + a;
@@ -127,8 +127,9 @@ namespace StarterKit
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, w, h, 0, PixelFormat.Rgb,
                          PixelType.Float, randomArray);
             
-            float[] fpix = new float[mapWidth * mapHeight * 3];
+           /* float[] fpix = new float[mapWidth * mapHeight * 3];
             GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
+            */
 
             return texture;
         }
