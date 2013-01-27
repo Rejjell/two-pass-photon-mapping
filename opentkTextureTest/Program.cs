@@ -23,7 +23,6 @@ namespace StarterKit
         private uint photonRefletionDirectionsTexture2;
         private uint photonRefletionDirectionsTexture3;
         private uint randomProbabilityTexture;
-        private uint p;
         
         static int w = 800;
         static int h = 800;
@@ -63,8 +62,7 @@ namespace StarterKit
             photonRefletionDirectionsTexture1 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
-            randomProbabilityTexture = GenerateRandomTexture(0, 1);
-            p = GenerateRandomTexture(0, 1);
+            randomProbabilityTexture = GenerateRandomTexture(0,1);
 
             PhotonMappingUniformSet();
 
@@ -116,9 +114,9 @@ namespace StarterKit
 
             for (int k = 0; k < mapWidth*mapHeight*3; k+=3)
             {
-                randomArray[k] = (float)r.NextDouble() * (b - a) + a;
-                randomArray[k + 1] = (float)r.NextDouble() * (b - a) + a;
-                randomArray[k + 2] = (float)r.NextDouble() * (b - a) + a; 
+                randomArray[k] = (float) r.NextDouble()*(b - a) + a;
+                randomArray[k + 1] = (float) r.NextDouble()*(b - a) + a;
+                randomArray[k + 2] = (float) r.NextDouble()*(b - a) + a;
             }
 
             uint texture;
@@ -177,10 +175,7 @@ namespace StarterKit
 
             //frameBuffer1 = new FrameBuffer(w, h);
             //frameBuffer1.Activate();
-            renderShader.Activate();
-                renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture6, "PhotonTexture");
-                renderShader.SetUniformTextureRect(p, TextureUnit.Texture7, "P");
-            renderShader.Deactivate();
+            renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture0, "PhotonTexture");
             RayTracing();
             //frameBuffer1.Deactivate();
 
@@ -210,7 +205,7 @@ namespace StarterKit
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
                 photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
-                photonShader.SetUniform("Light.Position", new Vector3(0.0F, 4.9F, 0.0F));
+                photonShader.SetUniform("Light.Position", new Vector3(0.0F, 5.0F, 0.0F));
                 photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
                 photonShader.SetUniform("Light.Distance", 0.5F * 10);
                 photonShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
@@ -226,7 +221,7 @@ namespace StarterKit
                 renderShader.SetUniform("GlassSphere.Radius", 2.0F);
                 renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 renderShader.SetUniform("MatSphere.Radius", 1.0F);
-                renderShader.SetUniform("Light.Position", new Vector3(0.0F, 4.9F, 0.0F));
+                renderShader.SetUniform("Light.Position", new Vector3(0.0F, 5.0F, 0.0F));
 
                 renderShader.SetUniform("Delta", 1.0F);
                 renderShader.SetUniform("InverseDelta", 1.0F / 1.0F);
