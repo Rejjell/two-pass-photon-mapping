@@ -28,8 +28,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 20;
-        private int mapHeight = 20;
+        int mapWidth = 50;
+        private int mapHeight = 50;
 
         float PhotonIntensity = 100.0F;
 
@@ -116,12 +116,9 @@ namespace StarterKit
 
             for (int k = 0; k < mapWidth*mapHeight*3; k+=3)
             {
-                //randomArray[k] = (float)r.NextDouble() * (b - a) + a;
-                //randomArray[k + 1] = (float)r.NextDouble() * (b - a) + a;
-                //randomArray[k + 2] = (float)r.NextDouble() * (b - a) + a; 
-                randomArray[k] = 0;
-                randomArray[k + 1] = 0;
-                randomArray[k + 2] = 0;
+                randomArray[k] = (float)r.NextDouble() * (b - a) + a;
+                randomArray[k + 1] = (float)r.NextDouble() * (b - a) + a;
+                randomArray[k + 2] = (float)r.NextDouble() * (b - a) + a; 
             }
 
             uint texture;
@@ -180,7 +177,10 @@ namespace StarterKit
 
             //frameBuffer1 = new FrameBuffer(w, h);
             //frameBuffer1.Activate();
-            renderShader.SetUniformTextureRect(/*frameBuffer.GetTexture()*/p, TextureUnit.Texture0, "PhotonTexture");
+            renderShader.Activate();
+                renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture6, "PhotonTexture");
+                renderShader.SetUniformTextureRect(p, TextureUnit.Texture7, "P");
+            renderShader.Deactivate();
             RayTracing();
             //frameBuffer1.Deactivate();
 
