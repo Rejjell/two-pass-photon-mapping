@@ -102,9 +102,7 @@ uniform vec2 PhotonMapSize;
 	uniform sampler2DRect PhotonTexture;
 	uniform sampler2DRect RectangleLightPointsPhongTexture;
 
-	const float Reflectivity = 0.5;
-	const float Refractability = 0.5;
-
+	const float ReflectRefractCoef = 0.5;
 #else
 	uniform sampler2DRect PhotonEmissionDirectionsTexture;
 	uniform sampler2DRect PhotonRefletionDirectionsTexture1;
@@ -261,7 +259,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		return center;
 	}
 
-	void Caustic ( SIntersection intersect, inout vec3 color )
+	void Caustic ( SIntersection intersect, inout vec3 color, float reflectionInfluence )
 	{
 		float left = BinSearch ( intersect.Point - vec3 ( Delta ) );
 		float right = BinSearch ( intersect.Point + vec3 ( Delta ) );
@@ -272,7 +270,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 				PhotonTexture, vec2 ( mod ( i, PhotonMapSize.x ), floor ( i / PhotonMapSize.y ) ) );
 		
 			color +=
-				max ( 0.0, 1.0 - InverseDelta * length ( photon.xyz - intersect.Point ) ) * PhotonIntensity;
+				max ( 0.0, 1.0 - InverseDelta * length ( photon.xyz - intersect.Point ) ) * PhotonIntensity * reflectionInfluence;
 		}
 
 	}
@@ -444,7 +442,7 @@ void main ( void )
 		vec3 color = Zero;
 		vec3 mainColor = Zero;
 		vec3 secondaryColor = Zero;
-		int depth = 3;
+		int depth = 10;
 	#endif
 
 	bool continueTracing = true;
@@ -456,6 +454,7 @@ void main ( void )
 
 	do
 	{
+
 		if ( Raytrace ( ray, EPSILON, final, intersect, reflection, refraction ) )
 		{
 			rayCount++;
@@ -511,11 +510,11 @@ void main ( void )
 		if (rayCount > 0)
 		{
 			if (rayCount > 1)
-				color = mix(mainColor, secondaryColor, Reflectivity);
+				color = mix(mainColor, secondaryColor, ReflectRefractCoef);
 			else
 				color = mainColor;
 
-			Caustic ( intersect, color );
+			Caustic ( intersect, color, reflectionInfluence );
 		}
 	#endif
 
@@ -525,12 +524,5 @@ void main ( void )
 	#else
 		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
 		gl_FragColor = vec4 ( color, 1.0 );
-		//gl_FragColor = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
-	
-		/*vec3 lightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
-		lightPosition.x *= 2.0;
-		lightPosition.y = 5.0;
-		lightPosition.z *= 2.0;
-		gl_FragColor = vec4(lightPosition,1.0);*/
 	#endif
 }
