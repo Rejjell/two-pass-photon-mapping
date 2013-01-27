@@ -103,6 +103,7 @@ uniform vec2 PhotonMapSize;
 	uniform sampler2DRect RectangleLightPointsPhongTexture;
 
 	const float ReflectRefractCoef = 0.5;
+
 #else
 	uniform sampler2DRect PhotonEmissionDirectionsTexture;
 	uniform sampler2DRect PhotonRefletionDirectionsTexture1;
@@ -110,6 +111,8 @@ uniform vec2 PhotonMapSize;
 	uniform sampler2DRect PhotonRefletionDirectionsTexture3;
 	uniform sampler2DRect RectangleLightPointsTexture;
 	uniform sampler2DRect RandomProbabilityTexture;
+
+	
 #endif
 
 
@@ -202,27 +205,34 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 	}
 
 #ifndef PHOTON_MAP
-	vec3 Phong ( SIntersection intersect )
+	vec3 PhongPointLight ( SIntersection intersect/*, vec3 pointLightPosition */)
 	{
-		vec3 lightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
-		//vec3 lightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2(0,0));
-
-		lightPosition.x *= 2;
-		lightPosition.y = 5.0;
-		lightPosition.z *= 2;
-
-
+		vec3 pointLightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
+		pointLightPosition.x *= 0.2;
+		pointLightPosition.y = 5.0;
+		pointLightPosition.z *= 0.2;
 		//vec3 light = normalize ( Light.Position - intersect.Point );
-		vec3 light = normalize ( lightPosition - intersect.Point );
+		vec3 light = normalize ( pointLightPosition - intersect.Point );
 		vec3 view = normalize ( Camera.Position - intersect.Point );
 		float diffuse = max ( dot ( light, intersect.Normal ), 0.0 );
 		vec3 reflection = reflect ( -view, intersect.Normal );
 		float specular = pow ( max ( dot ( reflection, light ), 0.0 ), intersect.Material.w );
 
-		return //intersect.Material.x * Unit +
-			   intersect.Material.y * diffuse * intersect.Color;// +
-			   //intersect.Material.z * specular * Unit;
+		return intersect.Material.x * Unit +
+			   intersect.Material.y * diffuse * intersect.Color +
+			   intersect.Material.z * specular * Unit;
 	}
+
+	/*vec3 PhongRectangleLight ( SIntersection intersect )
+	{
+		vec3 v1 = vec3(0.0, 0.0,  RectangleLight.Length/2);
+		vec3 v2 = vec3(RectangleLight.Width/2, 0.0,  0.0);
+
+		return PhongPointLight(intersect, Light.Position + v1 + v2) +
+			   PhongPointLight(intersect, Light.Position - v1 + v2) +
+			   PhongPointLight(intersect, Light.Position + v1 - v2) +
+			   PhongPointLight(intersect, Light.Position - v1 - v2);
+	}*/
 
 	bool Compare ( vec3 left, vec3 right )
 	{
@@ -463,9 +473,9 @@ void main ( void )
 
 			#ifndef PHOTON_MAP
 				if (rayCount == 1)
-					mainColor = Phong ( intersect );
+					mainColor = PhongPointLight(intersect);
 				else
-					secondaryColor += Phong ( intersect )*reflectionInfluence;
+					secondaryColor += PhongPointLight(intersect)*reflectionInfluence;
 			#else
 				if (!continueTracing)
 					continueTracing = (probabilities[rayCount] < intersect.Material.z);
@@ -514,7 +524,7 @@ void main ( void )
 			else
 				color = mainColor;
 
-			Caustic ( intersect, color, reflectionInfluence );
+			Caustic( intersect, color, reflectionInfluence );
 		}
 	#endif
 

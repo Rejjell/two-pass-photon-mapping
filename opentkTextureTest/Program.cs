@@ -28,8 +28,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 50;
-        private int mapHeight = 50;
+        int mapWidth = 30;
+        private int mapHeight = 30;
 
         float PhotonIntensity = 100.0F;
 
@@ -174,7 +174,7 @@ namespace StarterKit
 
             RayTracing();
             
-           /* frameBuffer1 = new FrameBuffer(w, h);
+            /*frameBuffer1 = new FrameBuffer(w, h);
             frameBuffer1.Activate();
             
             RayTracing();
@@ -184,8 +184,8 @@ namespace StarterKit
             GL.ActiveTexture(TextureUnit.Texture9);
             GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer1.GetTexture());
             float[] pix1 = new float[w * h * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);
-            */
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);*/
+            
             SwapBuffers();
             
         }
@@ -205,7 +205,7 @@ namespace StarterKit
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
                 photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
-                photonShader.SetUniform("Light.Position", new Vector3(0.0F, 5.0F, 0.0F));
+                photonShader.SetUniform("Light.Position", new Vector3(0.0F, 4.999F, 0.0F));
                 photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
                 photonShader.SetUniform("Light.Distance", 0.5F * 10);
                 photonShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
@@ -221,7 +221,7 @@ namespace StarterKit
                 renderShader.SetUniform("GlassSphere.Radius", 2.0F);
                 renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 renderShader.SetUniform("MatSphere.Radius", 1.0F);
-                renderShader.SetUniform("Light.Position", new Vector3(0.0F, 5.0F, 0.0F));
+                renderShader.SetUniform("Light.Position", new Vector3(0.0F, 4.999F, 0.0F));
 
                 renderShader.SetUniform("Delta", 1.0F);
                 renderShader.SetUniform("InverseDelta", 1.0F / 1.0F);
