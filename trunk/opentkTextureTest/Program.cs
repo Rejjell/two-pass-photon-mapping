@@ -23,6 +23,7 @@ namespace StarterKit
         private uint photonRefletionDirectionsTexture2;
         private uint photonRefletionDirectionsTexture3;
         private uint randomProbabilityTexture;
+        private uint p;
         
         static int w = 800;
         static int h = 800;
@@ -62,7 +63,8 @@ namespace StarterKit
             photonRefletionDirectionsTexture1 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
-            randomProbabilityTexture = GenerateRandomTexture(0,1);
+            randomProbabilityTexture = GenerateRandomTexture(0, 1);
+            p = GenerateRandomTexture(0, 1);
 
             PhotonMappingUniformSet();
 
@@ -114,9 +116,12 @@ namespace StarterKit
 
             for (int k = 0; k < mapWidth*mapHeight*3; k+=3)
             {
-                randomArray[k] = (float) r.NextDouble()*(b - a) + a;
-                randomArray[k + 1] = (float) r.NextDouble()*(b - a) + a;
-                randomArray[k + 2] = (float) r.NextDouble()*(b - a) + a;
+                //randomArray[k] = (float)r.NextDouble() * (b - a) + a;
+                //randomArray[k + 1] = (float)r.NextDouble() * (b - a) + a;
+                //randomArray[k + 2] = (float)r.NextDouble() * (b - a) + a; 
+                randomArray[k] = 0;
+                randomArray[k + 1] = 0;
+                randomArray[k + 2] = 0;
             }
 
             uint texture;
@@ -175,7 +180,7 @@ namespace StarterKit
 
             //frameBuffer1 = new FrameBuffer(w, h);
             //frameBuffer1.Activate();
-            renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture0, "PhotonTexture");
+            renderShader.SetUniformTextureRect(/*frameBuffer.GetTexture()*/p, TextureUnit.Texture0, "PhotonTexture");
             RayTracing();
             //frameBuffer1.Deactivate();
 
