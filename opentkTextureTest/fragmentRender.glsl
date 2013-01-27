@@ -102,6 +102,7 @@ uniform vec2 PhotonMapSize;
 	uniform float Delta;							// Radius of vicinity for gathering of photons
 	uniform float InverseDelta;						// Inverse radius for fast calculations
 	uniform sampler2DRect PhotonTexture;
+	uniform sampler2DRect P;
 
 #else
 	uniform sampler2DRect PhotonEmissionDirectionsTexture;
@@ -511,8 +512,8 @@ void main ( void )
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = texture2DRect(RandomProbabilityTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#else
-		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
+		//gl_FragColor = texture2DRect(P, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));;
+		gl_FragColor= texture2DRect(P, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 		//gl_FragColor = vec4 ( color, 1.0 );
-		gl_FragColor= texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#endif
 }
