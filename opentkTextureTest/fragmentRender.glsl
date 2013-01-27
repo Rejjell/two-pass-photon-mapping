@@ -100,6 +100,7 @@ uniform vec2 PhotonMapSize;
 	uniform float Delta;							// Radius of vicinity for gathering of photons
 	uniform float InverseDelta;						// Inverse radius for fast calculations
 	uniform sampler2DRect PhotonTexture;
+	uniform sampler2DRect RectangleLightPointsPhongTexture;
 
 	const float Reflectivity = 0.5;
 	const float Refractability = 0.5;
@@ -501,7 +502,7 @@ void main ( void )
 		if (rayCount > 0)
 		{
 			if (rayCount > 1)
-				color = mix(mainColor, secondaryColor, WallsReflectivity);
+				color = mix(mainColor, secondaryColor, Reflectivity);
 			else
 				color = mainColor;
 
@@ -515,5 +516,6 @@ void main ( void )
 	#else
 		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
 		gl_FragColor = vec4 ( color, 1.0 );
+		gl_FragColor = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#endif
 }

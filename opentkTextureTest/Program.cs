@@ -23,6 +23,7 @@ namespace StarterKit
         private uint photonRefletionDirectionsTexture2;
         private uint photonRefletionDirectionsTexture3;
         private uint randomProbabilityTexture;
+        private uint p;
         
         static int w = 800;
         static int h = 800;
@@ -57,12 +58,13 @@ namespace StarterKit
 
             frameBuffer = new FrameBuffer(mapWidth, mapHeight);
 
-            rectangleLightPointsTexture = GenerateRandomTexture(-1,1);
+            rectangleLightPointsTexture = GenerateRandomTexture(-1,1,mapWidth,mapHeight);
             photonEmissionDirectionsTexture = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture1 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
-            randomProbabilityTexture = GenerateRandomTexture(0,1);
+            randomProbabilityTexture = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
+            p = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
 
             PhotonMappingUniformSet();
 
@@ -106,7 +108,7 @@ namespace StarterKit
         }
         
 
-        private uint GenerateRandomTexture(float a, float b)
+        private uint GenerateRandomTexture(float a, float b,int w, int h)
         {
             float[] randomArray = new float[mapWidth * mapHeight * 3];
 
@@ -122,7 +124,7 @@ namespace StarterKit
             uint texture;
             GL.GenTextures(1, out texture);
             GL.BindTexture(TextureTarget.TextureRectangle, texture);
-            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
+            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, w, h, 0, PixelFormat.Rgb,
                          PixelType.Float, randomArray);
             
             float[] fpix = new float[mapWidth * mapHeight * 3];
@@ -175,7 +177,7 @@ namespace StarterKit
 
             //frameBuffer1 = new FrameBuffer(w, h);
             //frameBuffer1.Activate();
-            renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture0, "PhotonTexture");
+            //renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture0, "PhotonTexture");
             RayTracing();
             //frameBuffer1.Deactivate();
 
@@ -246,6 +248,9 @@ namespace StarterKit
             GL.Viewport(0,0,w,h);
             
             renderShader.Activate();
+                renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture6, "PhotonTexture");
+                renderShader.SetUniformTextureRect(p, TextureUnit.Texture7, "RectangleLightPointsPhongTexture");
+                
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-w/2, -h/2);
                 GL.Vertex2(w/2, -h/2);
