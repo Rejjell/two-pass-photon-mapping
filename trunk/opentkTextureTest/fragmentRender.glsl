@@ -54,13 +54,10 @@ struct RectangleLightStruct
 	float Length;
 };
 
-#define TRACE_DEPTH_2
-// Sets number of secondary rays ( from 1 to 3 )
-
 const float GlassAirIndex = 4.5;							// Ratio of refraction indices of glass and air
 const float AirGlassIndex = 1.0 / GlassAirIndex;			// Ratio of refraction indices of air and glass
 
-const vec3 GlassColor = vec3 ( 1.0, 1.0, 1.0 );		
+const vec3 GlassColor = vec3 ( 0.0, 1.0, 0.0 );		
 const vec3 MatColor = vec3 ( 0.0, 0.0, 1.0 );
 const vec3 RightWallColor = vec3 (1.0,0.0,0.0);
 const vec3 LeftWallColor = vec3 (0.0,1.0,0.0);
@@ -68,7 +65,8 @@ const vec3 DefaultWallsColor = vec3 (1.0,0.6,0.25);
 
 const vec4 GlassMaterial = vec4 ( 0.1, 0.1, 0.6, 128.0 );
 const vec4 MatMaterial = vec4 ( 0.1, 1.0, 0.05, 8.0 );	// Glass material ( ambient, diffuse and specular coeffs )
-const vec4 WallMaterial = vec4 ( 0.1, 0.8, 0.1, 32.0 );		// Wall material ( ambient, diffuse and specular coeffs )
+const vec4 WallMaterial = vec4 ( 0.1, 0.8, 0.1, 32.0 );	
+const vec4 ReflectiveWallMaterial = vec4 ( 0.1, 0.5, 0.5, 128.0 );	// Wall material ( ambient, diffuse and specular coeffs )
 
 const vec3 Zero = vec3 ( 0.0, 0.0, 0.0 );
 const vec3 Unit = vec3 ( 1.0, 1.0, 1.0 );
@@ -102,7 +100,9 @@ uniform vec2 PhotonMapSize;
 	uniform float Delta;							// Radius of vicinity for gathering of photons
 	uniform float InverseDelta;						// Inverse radius for fast calculations
 	uniform sampler2DRect PhotonTexture;
-	uniform sampler2DRect P;
+
+	const float Reflectivity = 0.5;
+	const float Refractability = 0.5;
 
 #else
 	uniform sampler2DRect PhotonEmissionDirectionsTexture;
@@ -320,19 +320,19 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	
 	if ( IntersectPlane ( ray, AxisX, BoxMinimum.x, start, final, test ) && test < intersect.Time )
 	{
-		SetIntersection(ray, intersect, AxisX, LeftWallColor, GlassMaterial, test);
+		SetIntersection(ray, intersect, AxisX, LeftWallColor, ReflectiveWallMaterial, test);
 
 		refraction = false;
-		reflection = false;
+		reflection = true;
 		result = true;
 	}
 
 	if ( IntersectPlane ( ray, AxisX, BoxMaximum.x, start, final, test ) && test < intersect.Time )
 	{
-		SetIntersection(ray, intersect, -AxisX, RightWallColor, GlassMaterial, test);
+		SetIntersection(ray, intersect, -AxisX, RightWallColor, ReflectiveWallMaterial, test);
 		
 		result = true;
-		reflection = false;
+		reflection = true;
 		refraction = false;
 	}
 
@@ -429,33 +429,43 @@ void main ( void )
 		intersect.Point = vec3 ( BIG );
 		float[3] probabilities = PhotonProbabilitiesInitialization();
 		vec3[3] directions = PhotonReflectionDirectionsInitialization();
+		int depth = 3;
 	#else
 		vec3 color = Zero;
 		vec3 mainColor = Zero;
 		vec3 secondaryColor = Zero;
+		int depth = 3;
 	#endif
 
 	bool continueTracing = true;
-	bool refraction = true;
-	bool reflection = true;
+	bool refraction = false;
+	bool reflection = false;
 	bool air = true;
-
-	#ifdef PHOTON_MAP
-		int depth = 2;
-	#else
-		int depth = 10;
-	#endif 
-
 	int rayCount = 0;
+	float reflectionInfluence = 1.0;
 
-
-
-	
-
-	while ((rayCount<=depth)&&continueTracing)
+	do
 	{
-		if (rayCount > 0)
+		if ( Raytrace ( ray, EPSILON, final, intersect, reflection, refraction ) )
+		{
+			rayCount++;
+			
+			continueTracing = reflection || refraction;
+
+			#ifndef PHOTON_MAP
+				if (rayCount == 1)
+					mainColor = Phong ( intersect );
+				else
+					secondaryColor += Phong ( intersect )*reflectionInfluence;
+			#else
+				if (!continueTracing)
+					continueTracing = (probabilities[rayCount] < intersect.Material.z);
+			#endif
+
+			if (continueTracing&&(rayCount<=depth))
 			{
+				reflectionInfluence *= 0.5;
+
 				vec3 direction;
 
 				if (reflection)
@@ -477,43 +487,33 @@ void main ( void )
 				final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
 				intersect.Time = BIG;
 			}
-
-
-		if ( Raytrace ( ray, EPSILON, final, intersect, reflection, refraction ) )
-		{
-			continueTracing = reflection || refraction;
-
-			#ifndef PHOTON_MAP
-				if (rayCount = 0)
-					mainColor = Phong ( intersect );
-				else
-					secondaryColor += Phong ( intersect );
-			#else
-				if (!continueTracing)
-					continueTracing = (probabilities[rayCount] < intersect.Material.z);
-				
-			#endif
-
-			
-
-			rayCount++;
 		}
 		else
 			continueTracing = false;
+		
+
+		
 	}
+	while ((rayCount<depth)&&continueTracing);
 
 	
 	#ifndef PHOTON_MAP
 		if (rayCount > 0)
+		{
+			if (rayCount > 1)
+				color = mix(mainColor, secondaryColor, WallsReflectivity);
+			else
+				color = mainColor;
+
 			Caustic ( intersect, color );
+		}
 	#endif
 
 	#ifdef PHOTON_MAP
 		gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = texture2DRect(RandomProbabilityTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#else
-		//gl_FragColor = texture2DRect(P, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));;
-		gl_FragColor= texture2DRect(P, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
-		//gl_FragColor = vec4 ( color, 1.0 );
+		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
+		gl_FragColor = vec4 ( color, 1.0 );
 	#endif
 }
