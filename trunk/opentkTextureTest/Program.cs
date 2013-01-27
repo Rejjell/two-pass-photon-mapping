@@ -23,7 +23,7 @@ namespace StarterKit
         private uint photonRefletionDirectionsTexture2;
         private uint photonRefletionDirectionsTexture3;
         private uint randomProbabilityTexture;
-        private uint p;
+        private uint rectangleLightPointsPhongTexture;
         
         static int w = 800;
         static int h = 800;
@@ -64,7 +64,7 @@ namespace StarterKit
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
             randomProbabilityTexture = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
-            p = GenerateRandomTexture(0, 1, 800, 800);
+            rectangleLightPointsPhongTexture = GenerateRandomTexture(0, 1, 800, 800);
 
             PhotonMappingUniformSet();
 
@@ -172,25 +172,22 @@ namespace StarterKit
             
             RayTracingUniformSet();
 
-            //GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
-            //angle += 0.1f;
-            
-
-            //frameBuffer1 = new FrameBuffer(w, h);
-            //frameBuffer1.Activate();
-            //renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture0, "PhotonTexture");
             RayTracing();
-            //frameBuffer1.Deactivate();
+            
+           /* frameBuffer1 = new FrameBuffer(w, h);
+            frameBuffer1.Activate();
+            
+            RayTracing();
 
-            /*GL.ActiveTexture(TextureUnit.Texture0);
+            frameBuffer1.Deactivate();
+        
+            GL.ActiveTexture(TextureUnit.Texture9);
             GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer1.GetTexture());
             float[] pix1 = new float[w * h * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);*/
-
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);
+            */
             SwapBuffers();
-
-            //GL.BindTexture(TextureTarget.TextureRectangle, 0);
-
+            
         }
 
         private void PhotonMappingUniformSet()
@@ -250,7 +247,7 @@ namespace StarterKit
             
             renderShader.Activate();
                 renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture6, "PhotonTexture");
-                renderShader.SetUniformTextureRect(p, TextureUnit.Texture7, "RectangleLightPointsPhongTexture");
+                renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture7, "RectangleLightPointsPhongTexture");
                 
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-w/2, -h/2);
