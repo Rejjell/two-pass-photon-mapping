@@ -513,6 +513,6 @@ void main ( void )
 	#else
 		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
 		//gl_FragColor = vec4 ( color, 1.0 );
-		gl_FragColor =  texture2DRect(PhotonTexture, vec2(15,15));
+		gl_FragColor= texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#endif
 }
