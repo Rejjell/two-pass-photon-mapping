@@ -197,17 +197,29 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 #ifndef PHOTON_MAP
 	vec3 Phong ( SIntersection intersect )
 	{
+
+		//return vec3(0);
 		vec3 light = normalize ( Light.Position - intersect.Point );
 		vec3 view = normalize ( Camera.Position - intersect.Point );
 		float diffuse = max ( dot ( light, intersect.Normal ), 0.0 );
 		vec3 reflect = reflect ( -view, intersect.Normal );
 		float specular = pow ( max ( dot ( reflect, light ), 0.0 ), intersect.Material.w );
 
-		return intersect.Material.x * Unit +
-			   intersect.Material.y * diffuse * intersect.Color +
-			   intersect.Material.z * specular * Unit;
-	}
+		vec3 point=intersect.Point;
 
+		if ((point.y<=5.01)&&(point.y>=4.99))  diffuse = 0.5 ;
+		if ((point.x<(RectangleLight.Center.x + RectangleLight.Width/2))
+			  &&(point.x>(RectangleLight.Center.x - RectangleLight.Width/2))
+			  &&(point.z<(RectangleLight.Center.y + RectangleLight.Length/2))
+			  &&(point.z>(RectangleLight.Center.y - RectangleLight.Length/2)))
+				diffuse = 1;
+
+		return intersect.Material.x * Unit+
+			   intersect.Material.y * diffuse * intersect.Color 
+			  + intersect.Material.z * specular * Unit
+			  ;
+	}
+	
 	bool Compare ( vec3 left, vec3 right )
 	{
 		bvec3 greater = greaterThan ( left, right );
