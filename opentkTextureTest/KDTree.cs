@@ -12,8 +12,8 @@ namespace StarterKit
     class KDTree
     {
         private KDNode root;
-        private List<Vector4> mainData;
-        private List<Vector4> secData;
+        public List<Vector4> mainData;
+        public List<Vector4> secData;
         
         public KDTree()
         {
@@ -42,8 +42,11 @@ namespace StarterKit
             int k = 0;
 
 
+
+
             while (current != null)
             {
+
                 
 
                 if (points.Count > 1)
@@ -126,32 +129,48 @@ namespace StarterKit
            
                     current.photon = false;
 
+                    if (!current.visited)
+                    {
+                        mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 0.0f));
+                    }
+
+
 
                 }
                 else
                 {
                     current.point = points.ElementAt(0);
                     current.photon = true;
+
+                    mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 1.0f));
+                    secData.Add(new Vector4(-1.0f, -1.0f, current.parent.k, 0.0f));
+
                 }
 
-                
-                if ((current.left != null) && (!current.left.visited))
+                current.visited = true;
+
+                if ((current.left!=null) && (!current.left.visited))
                 {
+                    current.left.parentk = current.k;
                     k++;
-                    current.left.k = k;
+                    current.leftk = k;
                     
+
                     current = current.left;
+                    
                     parentPoints = new List<Vector3>(points);
                     points = new List<Vector3>(leftPoints);
-
                 }
                 else
                 {
                     if ((current.right != null) && (!current.right.visited))
                     {
+                        current.right.parentk = current.k;
                         k++;
-                        current.right.k = k;
-                        
+                        current.rightk = k;
+
+                        secData.Add(new Vector4(current.leftk, current.rightk, current.parentk, 0.0f));
+
                         current = current.right;
                         parentPoints = new List<Vector3>(points);
                         points = new List<Vector3>(rightPoints);
@@ -161,32 +180,13 @@ namespace StarterKit
                     {
                         current = current.parent;
                         points = new List<Vector3>(parentPoints);
+
+                        //secData.Add(new Vector4(-1.0f,-1.0f, -1.0f, 0.0f));
                     }
                 }
 
-                if (!current.visited)
-                {
+                
 
-                    float ph = 0.0f;
-                    if (current.photon) ph = 1.0f;
-
-                    mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, ph));
-
-                    float l = -1.0f;
-                    float r = -1.0f;
-                    float p = -1.0f;
-
-                    if (current.left != null)
-                        l = current.left.k;
-                    if (current.right != null)
-                        r = current.right.k;
-                    if (current.parent != null)
-                        p = current.parent.k;
-
-                    secData.Add(new Vector4(l, r, p, 0.0f));
-                }
-
-                current.visited = true;
             }
 
 
