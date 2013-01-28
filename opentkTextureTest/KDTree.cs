@@ -117,6 +117,8 @@ namespace StarterKit
                         mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 0.0f));
                     }
 
+                    current.visited = true;
+
                     if (!current.left.visited)
                     {
                         current.left.parent = current;
@@ -146,23 +148,30 @@ namespace StarterKit
                             points = new List<Vector3>(rightPoints);
 
                         }
+                        else
+                        {
+                            current = current.parent;
+                            points = new List<Vector3>(parentPoints);
+                        }
                     }
 
                 }
                 else
                 {
+                    current.visited = true;
+
                     current.point = points.ElementAt(0);
                     current.photon = true;
 
                     current = current.parent;
                     points = new List<Vector3>(parentPoints);
 
-                    mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 1.0f));
-                    secData.Add(new Vector4(-1.0f, -1.0f, current.parent.k, 0.0f));
+                    //mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 1.0f));
+                    //secData.Add(new Vector4(-1.0f, -1.0f, current.parent.k, 0.0f));
 
                 }
 
-                current.visited = true;
+                
 
 
                 
