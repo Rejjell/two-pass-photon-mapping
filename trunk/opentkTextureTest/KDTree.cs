@@ -41,14 +41,8 @@ namespace StarterKit
 
             int k = 0;
 
-
-
-
             while (current != null)
             {
-
-                
-
                 if (points.Count > 1)
                 {
                     X.Clear();
@@ -76,8 +70,6 @@ namespace StarterKit
 
                     if (maxDim == dif.X)
                     {
-
-
                         current.point = new Vector3(X.Average(), 0.0f, 0.0f);
 
                         for (int i = 0; i < points.Count; i++)
@@ -108,15 +100,6 @@ namespace StarterKit
                                 rightPoints.Add(points.ElementAt(i));
 
                     }
-                    //int[] a = new a;
-
-                    //points.Clear();
-                    //KDTree leftTree = new KDTree();
-                    //KDTree rightTree = new KDTree();
-
-                    //root.left = leftTree.Balance(root, leftPoints);
-                    //leftPoints.Clear();
-                    //root.right = rightTree.Balance(root, rightPoints);
 
                     if (!current.visited)
                     {
@@ -134,13 +117,45 @@ namespace StarterKit
                         mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 0.0f));
                     }
 
+                    if (!current.left.visited)
+                    {
+                        current.left.parent = current;
+                        current.left.parentk = current.k;
+                        k++;
+                        current.leftk = k;
+                        current.left.k = k;
 
+
+                        current = current.left;
+
+                        parentPoints = new List<Vector3>(points);
+                        points = new List<Vector3>(leftPoints);
+                    }
+                    else
+                    {
+                        if (!current.right.visited)
+                        {
+                            current.right.parent = current;
+                            current.right.parentk = current.k;
+                            k++;
+                            current.rightk = k;
+                            current.right.k = k;
+
+                            current = current.right;
+                            parentPoints = new List<Vector3>(points);
+                            points = new List<Vector3>(rightPoints);
+
+                        }
+                    }
 
                 }
                 else
                 {
                     current.point = points.ElementAt(0);
                     current.photon = true;
+
+                    current = current.parent;
+                    points = new List<Vector3>(parentPoints);
 
                     mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 1.0f));
                     secData.Add(new Vector4(-1.0f, -1.0f, current.parent.k, 0.0f));
@@ -149,41 +164,6 @@ namespace StarterKit
 
                 current.visited = true;
 
-                if ((current.left!=null) && (!current.left.visited))
-                {
-                    current.left.parentk = current.k;
-                    k++;
-                    current.leftk = k;
-                    
-
-                    current = current.left;
-                    
-                    parentPoints = new List<Vector3>(points);
-                    points = new List<Vector3>(leftPoints);
-                }
-                else
-                {
-                    if ((current.right != null) && (!current.right.visited))
-                    {
-                        current.right.parentk = current.k;
-                        k++;
-                        current.rightk = k;
-
-                        secData.Add(new Vector4(current.leftk, current.rightk, current.parentk, 0.0f));
-
-                        current = current.right;
-                        parentPoints = new List<Vector3>(points);
-                        points = new List<Vector3>(rightPoints);
-
-                    }
-                    else
-                    {
-                        current = current.parent;
-                        points = new List<Vector3>(parentPoints);
-
-                        //secData.Add(new Vector4(-1.0f,-1.0f, -1.0f, 0.0f));
-                    }
-                }
 
                 
 
