@@ -20,32 +20,12 @@ namespace StarterKit
         public int leftk;
         public int rightk;
         public int parentk;
-        
+        private List<Vector3> points;
 
-        public KDNode()
-        {
-        }
 
-        public KDNode(KDNode node)
+        public KDNode(List<Vector3> pts)
         {
-            photon = node.photon;
-            point = node.point;
-            left = node.left;
-            right = node.right;
-            parent = node.parent;
-            visited = node.visited;
-            k = node.k;
-        }
-
-        public void Copy(KDNode node)
-        {
-            photon = node.photon;
-            point = node.point;
-            left = node.left;
-            right = node.right;
-            parent = node.parent;
-            visited = node.visited;
-            k = node.k;
+            points = pts;
         }
 
 
