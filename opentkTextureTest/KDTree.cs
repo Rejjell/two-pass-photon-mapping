@@ -14,6 +14,8 @@ namespace StarterKit
         private KDNode root;
         public List<Vector4> mainData;
         public List<Vector4> secData;
+        private int nodes = 0;
+        private int leaves = 0;
         
         public KDTree()
         {
@@ -56,11 +58,7 @@ namespace StarterKit
                         Z.Add(points.ElementAt(i).Z);
                     }
 
-                    Vector3 cubeMin = new Vector3(X.Min(), Y.Min(), Z.Min());
-                    Vector3 cubeMax = new Vector3(X.Max(), Y.Max(), Z.Max());
-                    
-
-                    Vector3 dif = new Vector3(cubeMax.X - cubeMin.X, cubeMax.Y - cubeMin.Y, cubeMax.Z - cubeMin.Z);
+                    Vector3 dif = new Vector3(X.Max() - X.Min(), Y.Max() - Y.Min(), Z.Max() - Z.Min());
                     
 
                     leftPoints.Clear();
@@ -73,7 +71,7 @@ namespace StarterKit
                         current.point = new Vector3(X.Average(), 0.0f, 0.0f);
 
                         for (int i = 0; i < points.Count; i++)
-                            if (points.ElementAt(i).X <= current.point.X)
+                            if (points.ElementAt(i).X < current.point.X)
                                 leftPoints.Add(points.ElementAt(i));
                             else
                                 rightPoints.Add(points.ElementAt(i));
@@ -84,7 +82,7 @@ namespace StarterKit
 
 
                         for (int i = 0; i < points.Count; i++)
-                            if (points.ElementAt(i).Y <= current.point.Y)
+                            if (points.ElementAt(i).Y < current.point.Y)
                                 leftPoints.Add(points.ElementAt(i));
                             else
                                 rightPoints.Add(points.ElementAt(i));
@@ -94,7 +92,7 @@ namespace StarterKit
                         current.point = new Vector3(0.0f, 0.0f, Z.Average());
 
                         for (int i = 0; i < points.Count; i++)
-                            if (points.ElementAt(i).Z <= current.point.Z)
+                            if (points.ElementAt(i).Z < current.point.Z)
                                 leftPoints.Add(points.ElementAt(i));
                             else
                                 rightPoints.Add(points.ElementAt(i));
@@ -103,6 +101,7 @@ namespace StarterKit
 
                     if (!current.visited)
                     {
+                        nodes++;
                         current.left = new KDNode();
                         current.right = new KDNode();
                         current.left.parent = current;
@@ -112,22 +111,13 @@ namespace StarterKit
            
                     current.photon = false;
 
-                    if (!current.visited)
-                    {
-                        mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 0.0f));
-                    }
-
-
-
                 }
                 else
                 {
                     current.point = points.ElementAt(0);
                     current.photon = true;
 
-                    mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, 1.0f));
-                    secData.Add(new Vector4(-1.0f, -1.0f, current.parent.k, 0.0f));
-
+                    leaves++;
                 }
 
                 current.visited = true;
@@ -135,10 +125,10 @@ namespace StarterKit
                 if ((current.left!=null) && (!current.left.visited))
                 {
                     current.left.parent = current;
-                    current.left.parentk = current.k;
-                    k++;
+                    //current.left.parentk = current.k;
+                    /*k++;
                     current.leftk = k;
-                    current.left.k = k;
+                    current.left.k = k;*/
                     
 
                     current = current.left;
@@ -151,10 +141,10 @@ namespace StarterKit
                     if ((current.right != null) && (!current.right.visited))
                     {
                         current.right.parent = current;
-                        current.right.parentk = current.k;
+                        /*current.right.parentk = current.k;
                         k++;
                         current.rightk = k;
-                        current.right.k = k;
+                        current.right.k = k;*/
 
                         current = current.right;
                         parentPoints = new List<Vector3>(points);
