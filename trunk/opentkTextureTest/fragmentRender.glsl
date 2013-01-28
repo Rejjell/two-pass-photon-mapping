@@ -208,24 +208,16 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 	vec3 PhongPointLight ( SIntersection intersect/*, vec3 pointLightPosition */)
 	{
 		vec3 pointLightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
-		pointLightPosition.x *= 1;
+		pointLightPosition.x *= 0.2;
 		pointLightPosition.y = 5.0;
-		pointLightPosition.z *= 1;
+		pointLightPosition.z *= 0.2;
 		//vec3 light = normalize ( Light.Position - intersect.Point );
 		vec3 light = normalize ( pointLightPosition - intersect.Point );
 		vec3 view = normalize ( Camera.Position - intersect.Point );
 		float diffuse = max ( dot ( light, intersect.Normal ), 0.0 );
 		vec3 reflection = reflect ( -view, intersect.Normal );
 		float specular = pow ( max ( dot ( reflection, light ), 0.0 ), intersect.Material.w );
-		
-		vec3 point=intersect.Point;
-		if ((point.y<=5.01)&&(point.y>=4.99))  diffuse = 0.5 ;
-		if ((point.x<(RectangleLight.Center.x + RectangleLight.Width/2))
-			  &&(point.x>(RectangleLight.Center.x - RectangleLight.Width/2))
-			  &&(point.z<(RectangleLight.Center.y + RectangleLight.Length/2))
-			  &&(point.z>(RectangleLight.Center.y - RectangleLight.Length/2)))
-				diffuse = 1;
-				
+
 		return intersect.Material.x * Unit +
 			   intersect.Material.y * diffuse * intersect.Color +
 			   intersect.Material.z * specular * Unit;
