@@ -32,7 +32,11 @@ namespace StarterKit
         {
             KDNode current = root;
 
+            
             List<Vector3> points = pts;
+            List<List<Vector3>> pointsStack = new List<List<Vector3>>();
+            pointsStack.Add(points);
+
             List<Vector3> leftPoints = new List<Vector3>();
             List<Vector3> rightPoints = new List<Vector3>();
             List<Vector3> parentPoints = new List<Vector3>();
@@ -45,6 +49,8 @@ namespace StarterKit
 
             while (current != null)
             {
+                points = new List<Vector3>(pointsStack.Last());
+
                 if (points.Count > 1)
                 {
                     X.Clear();
@@ -133,8 +139,9 @@ namespace StarterKit
 
                     current = current.left;
                     
-                    parentPoints = new List<Vector3>(points);
-                    points = new List<Vector3>(leftPoints);
+                    pointsStack.Add(new List<Vector3>(leftPoints));
+                    //parentPoints = new List<Vector3>(points);
+                    //points = new List<Vector3>(leftPoints);
                 }
                 else
                 {
@@ -147,14 +154,17 @@ namespace StarterKit
                         current.right.k = k;*/
 
                         current = current.right;
-                        parentPoints = new List<Vector3>(points);
-                        points = new List<Vector3>(rightPoints);
+
+                        //parentPoints = new List<Vector3>(points);
+                        //points = new List<Vector3>(rightPoints);
+
+                        pointsStack.Add(new List<Vector3>(rightPoints));
 
                     }
                     else
                     {
                         current = current.parent;
-                        points = new List<Vector3>(parentPoints);
+                        pointsStack.RemoveAt(pointsStack.Count-1);
                     }
                 }
 

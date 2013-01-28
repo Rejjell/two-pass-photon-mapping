@@ -20,15 +20,5 @@ namespace StarterKit
         public int leftk;
         public int rightk;
         public int parentk;
-        private List<Vector3> points;
-
-
-        public KDNode(List<Vector3> pts)
-        {
-            points = pts;
-        }
-
-
-
     }
 }
