@@ -29,8 +29,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 1000;
-        private int mapHeight = 1000;
+        int mapWidth = 2;
+        private int mapHeight = 3;
 
         float PhotonIntensity = 100.0F;
 
@@ -89,8 +89,8 @@ namespace StarterKit
 
             KDTree tree = new KDTree();
             tree.Balance(list);
-            List<Vector4> mainData = new List<Vector4>();
-            List<Vector4> secData = new List<Vector4>();
+            List<Vector4> mainData = tree.mainData;
+            List<Vector4> secData = tree.secData;
             //tree.BuildData(mainData, secData, -1);
 
             PhotonMapSort();

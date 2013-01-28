@@ -17,6 +17,37 @@ namespace StarterKit
         public KDNode parent;
         public bool visited = false;
         public int k;
+        public int leftk;
+        public int rightk;
+        public int parentk;
+        
+
+        public KDNode()
+        {
+        }
+
+        public KDNode(KDNode node)
+        {
+            photon = node.photon;
+            point = node.point;
+            left = node.left;
+            right = node.right;
+            parent = node.parent;
+            visited = node.visited;
+            k = node.k;
+        }
+
+        public void Copy(KDNode node)
+        {
+            photon = node.photon;
+            point = node.point;
+            left = node.left;
+            right = node.right;
+            parent = node.parent;
+            visited = node.visited;
+            k = node.k;
+        }
+
 
 
     }
