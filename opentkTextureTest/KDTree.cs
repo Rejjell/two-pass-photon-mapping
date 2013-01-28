@@ -12,12 +12,16 @@ namespace StarterKit
     class KDTree
     {
         private KDNode root;
+        private List<Vector4> mainData;
+        private List<Vector4> secData;
         
-        
-
         public KDTree()
         {
             root = new KDNode();
+            root.k = 0;
+            root.visited = false;
+            mainData = new List<Vector4>();
+            secData = new List<Vector4>();
             //this.points = pts;
 
         }
@@ -34,6 +38,9 @@ namespace StarterKit
             List<float> X = new List<float>();
             List<float> Y = new List<float>();
             List<float> Z = new List<float>();
+
+            int k = 0;
+
 
             while (current != null)
             {
@@ -112,9 +119,10 @@ namespace StarterKit
                     {
                         current.left = new KDNode();
                         current.right = new KDNode();
+                        current.left.parent = current;
+                        current.right.parent = current;
                     }
-                    current.left.parent = current;
-                    current.right.parent = current;
+                    
            
                     current.photon = false;
 
@@ -126,12 +134,12 @@ namespace StarterKit
                     current.photon = true;
                 }
 
-                current.visited = true;
-
-
-
+                
                 if ((current.left != null) && (!current.left.visited))
                 {
+                    k++;
+                    current.left.k = k;
+                    
                     current = current.left;
                     parentPoints = new List<Vector3>(points);
                     points = new List<Vector3>(leftPoints);
@@ -141,6 +149,9 @@ namespace StarterKit
                 {
                     if ((current.right != null) && (!current.right.visited))
                     {
+                        k++;
+                        current.right.k = k;
+                        
                         current = current.right;
                         parentPoints = new List<Vector3>(points);
                         points = new List<Vector3>(rightPoints);
@@ -152,6 +163,30 @@ namespace StarterKit
                         points = new List<Vector3>(parentPoints);
                     }
                 }
+
+                if (!current.visited)
+                {
+
+                    float ph = 0.0f;
+                    if (current.photon) ph = 1.0f;
+
+                    mainData.Add(new Vector4(current.point.X, current.point.Y, current.point.Z, ph));
+
+                    float l = -1.0f;
+                    float r = -1.0f;
+                    float p = -1.0f;
+
+                    if (current.left != null)
+                        l = current.left.k;
+                    if (current.right != null)
+                        r = current.right.k;
+                    if (current.parent != null)
+                        p = current.parent.k;
+
+                    secData.Add(new Vector4(l, r, p, 0.0f));
+                }
+
+                current.visited = true;
             }
 
 
