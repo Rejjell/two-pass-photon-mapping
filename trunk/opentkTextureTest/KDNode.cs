@@ -16,6 +16,7 @@ namespace StarterKit
         public KDNode right;
         public KDNode parent;
         public bool visited = false;
+        public int k;
 
 
     }
