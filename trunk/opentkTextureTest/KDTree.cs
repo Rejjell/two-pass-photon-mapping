@@ -13,16 +13,13 @@ namespace StarterKit
     {
         private KDNode root;
         
-        private List<Vector3> leftPoints;
-        private List<Vector3> rightPoints;
-        private List<Vector3> parentPoints;
+        
 
         public KDTree()
         {
             root = new KDNode();
             //this.points = pts;
-            leftPoints = new List<Vector3>();
-            rightPoints = new List<Vector3>();
+
         }
 
         public void Balance(List<Vector3> pts)
@@ -30,6 +27,9 @@ namespace StarterKit
             KDNode current = root;
 
             List<Vector3> points = pts;
+            List<Vector3> leftPoints = new List<Vector3>();
+            List<Vector3> rightPoints = new List<Vector3>();
+            List<Vector3> parentPoints = new List<Vector3>();
 
             List<float> X = new List<float>();
             List<float> Y = new List<float>();
@@ -129,19 +129,19 @@ namespace StarterKit
                 if ((current.left != null) && (!current.left.visited))
                 {
                     current = current.left;
-                    points = leftPoints;
+                    points = new List<Vector3>(leftPoints);
                     parentPoints = points;
                 }
                 else if ((current.right != null) && (!current.right.visited))
                 {
                     current = current.right;
-                    points = rightPoints;
+                    points = new List<Vector3>(rightPoints);
                     parentPoints = points;
                 }
                 else
                 {
                     current = current.parent;
-                    points = parentPoints;
+                    points = new List<Vector3>(parentPoints);
                 }
             }
 
