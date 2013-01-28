@@ -29,8 +29,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 1000;
-        private int mapHeight = 1000;
+        int mapWidth = 2;
+        private int mapHeight = 2;
 
         float PhotonIntensity = 100.0F;
 
@@ -43,7 +43,7 @@ namespace StarterKit
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-
+            
 
             GL.ClearColor(0.0f, 0.4f, 0.0f, 0.0f);
             
@@ -86,9 +86,13 @@ namespace StarterKit
                 Vector3 vec = new Vector3(pix[i], pix[i + 1], pix[i + 2]);
                 list.Add(vec);
             }
-
+            
             KDTree tree = new KDTree();
+            VSync = VSyncMode.Off;
             tree.Balance(list);
+            tree.BuildData(tree.root);
+            VSync = VSyncMode.On;
+
             List<Vector4> mainData = tree.mainData;
             List<Vector4> secData = tree.secData;
             //tree.BuildData(mainData, secData, -1);
