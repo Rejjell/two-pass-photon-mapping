@@ -87,8 +87,8 @@ namespace StarterKit
                 list.Add(vec);
             }
 
-            KDTree tree = new KDTree(list);
-            tree.Balance(new KDNode());
+            KDTree tree = new KDTree();
+            tree.Balance(list);
             List<Vector4> mainData = new List<Vector4>();
             List<Vector4> secData = new List<Vector4>();
             //tree.BuildData(mainData, secData, -1);

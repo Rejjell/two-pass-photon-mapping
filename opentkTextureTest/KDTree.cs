@@ -12,23 +12,24 @@ namespace StarterKit
     class KDTree
     {
         private KDNode root;
-        public List<Vector3> points;
+        
         private List<Vector3> leftPoints;
         private List<Vector3> rightPoints;
+        private List<Vector3> parentPoints;
 
-        public KDTree(List<Vector3> pts)
+        public KDTree()
         {
             root = new KDNode();
-            this.points = pts;
+            //this.points = pts;
             leftPoints = new List<Vector3>();
             rightPoints = new List<Vector3>();
         }
 
-        public void Balance(KDNode parent)
+        public void Balance(List<Vector3> pts)
         {
             KDNode current = root;
 
-            
+            List<Vector3> points = pts;
 
             List<float> X = new List<float>();
             List<float> Y = new List<float>();
@@ -108,6 +109,8 @@ namespace StarterKit
 
                     current.left = new KDNode();
                     current.right = new KDNode();
+                    current.left.parent = current;
+                    current.right.parent = current;
            
                     current.photon = false;
 
@@ -121,28 +124,25 @@ namespace StarterKit
 
                 current.visited = true;
 
-                List<Vector3> oldPoints = points;
+                
 
                 if ((current.left != null) && (!current.left.visited))
                 {
                     current = current.left;
                     points = leftPoints;
+                    parentPoints = points;
                 }
                 else if ((current.right != null) && (!current.right.visited))
                 {
                     current = current.right;
                     points = rightPoints;
+                    parentPoints = points;
                 }
                 else
                 {
                     current = current.parent;
-                    points = oldPoints;
+                    points = parentPoints;
                 }
-
-
-
-
-                root.parent = parent;
             }
 
 
