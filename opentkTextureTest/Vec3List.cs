@@ -8,7 +8,12 @@ namespace StarterKit
 {
     class Vec3List
     {
-        private List<Vec3> list;
+        public List<Vec3> list;
+
+        public Vec3List()
+        {
+            list = new List<Vec3>();
+        }
 
         public Vec3List(float[] floatArray)
         {

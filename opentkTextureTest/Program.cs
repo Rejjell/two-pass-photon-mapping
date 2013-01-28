@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
@@ -28,8 +29,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 30;
-        private int mapHeight = 30;
+        int mapWidth = 100;
+        private int mapHeight = 100;
 
         float PhotonIntensity = 100.0F;
 
@@ -42,6 +43,7 @@ namespace StarterKit
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+
 
             GL.ClearColor(0.0f, 0.4f, 0.0f, 0.0f);
             
@@ -64,7 +66,7 @@ namespace StarterKit
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
             randomProbabilityTexture = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
-            rectangleLightPointsPhongTexture = GenerateRandomTexture(-.5f, .5f, 800, 800);
+            rectangleLightPointsPhongTexture = GenerateRandomTexture(0, 1, 800, 800);
 
             PhotonMappingUniformSet();
 
@@ -77,8 +79,22 @@ namespace StarterKit
             float[] pix = new float[mapWidth * mapHeight * 3];
             GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
 
-            PhotonMapSort();
+            List<Vector3> list = new List<Vector3>();
 
+            for (int i = 0; i < pix.Length; i += 3)
+            {
+                Vector3 vec = new Vector3(pix[i], pix[i + 1], pix[i + 2]);
+                list.Add(vec);
+            }
+
+            KDTree tree = new KDTree();
+            tree.Balance(new KDNode(), list);
+            List<Vector4> mainData = new List<Vector4>();
+            List<Vector4> secData = new List<Vector4>();
+            //tree.BuildData(mainData, secData, -1);
+
+            PhotonMapSort();
+            
             
         }
 
@@ -236,8 +252,8 @@ namespace StarterKit
 
                 renderShader.SetUniform("RectangleLight.Center", new Vector2(0.0F, 0.0F));
                 renderShader.SetUniform("RectangleLight.Color", new Vector3(1.0F, 1.0F, 1.0F));
-                renderShader.SetUniform("RectangleLight.Length", 1.0F);
-                renderShader.SetUniform("RectangleLight.Width", 1.0F);
+                renderShader.SetUniform("RectangleLight.Length", 4.0F);
+                renderShader.SetUniform("RectangleLight.Width", 4.0F);
             renderShader.Deactivate();
         }
 
