@@ -64,7 +64,7 @@ namespace StarterKit
             photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
             photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
             randomProbabilityTexture = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
-            rectangleLightPointsPhongTexture = GenerateRandomTexture(0, 1, 800, 800);
+            rectangleLightPointsPhongTexture = GenerateRandomTexture(-.5f, .5f, 800, 800);
 
             PhotonMappingUniformSet();
 
@@ -236,8 +236,8 @@ namespace StarterKit
 
                 renderShader.SetUniform("RectangleLight.Center", new Vector2(0.0F, 0.0F));
                 renderShader.SetUniform("RectangleLight.Color", new Vector3(1.0F, 1.0F, 1.0F));
-                renderShader.SetUniform("RectangleLight.Length", 4.0F);
-                renderShader.SetUniform("RectangleLight.Width", 4.0F);
+                renderShader.SetUniform("RectangleLight.Length", 1.0F);
+                renderShader.SetUniform("RectangleLight.Width", 1.0F);
             renderShader.Deactivate();
         }
 
