@@ -11,7 +11,7 @@ namespace StarterKit
 
     class KDTree
     {
-        private KDNode root;
+        public KDNode root;
         public List<Vector4> mainData;
         public List<Vector4> secData;
         private int nodes = 0;
@@ -21,7 +21,7 @@ namespace StarterKit
         {
             root = new KDNode();
             root.k = 0;
-            root.visited = false;
+            root.parentk = -1;
             mainData = new List<Vector4>();
             secData = new List<Vector4>();
             //this.points = pts;
@@ -113,7 +113,7 @@ namespace StarterKit
                         current.left.parent = current;
                         current.right.parent = current;
                     }
-                    
+                  
            
                     current.photon = false;
 
@@ -126,37 +126,32 @@ namespace StarterKit
                     leaves++;
                 }
 
+
+
                 current.visited = true;
 
                 if ((current.left!=null) && (!current.left.visited))
                 {
-                    current.left.parent = current;
-                    //current.left.parentk = current.k;
-                    /*k++;
+                    current.left.parentk = current.k;
+                    k++;
                     current.leftk = k;
-                    current.left.k = k;*/
+                    current.left.k = k;
                     
 
                     current = current.left;
                     
                     pointsStack.Add(new List<Vector3>(leftPoints));
-                    //parentPoints = new List<Vector3>(points);
-                    //points = new List<Vector3>(leftPoints);
                 }
                 else
                 {
                     if ((current.right != null) && (!current.right.visited))
                     {
-                        current.right.parent = current;
-                        /*current.right.parentk = current.k;
+                        current.right.parentk = current.k;
                         k++;
                         current.rightk = k;
-                        current.right.k = k;*/
+                        current.right.k = k;
 
                         current = current.right;
-
-                        //parentPoints = new List<Vector3>(points);
-                        //points = new List<Vector3>(rightPoints);
 
                         pointsStack.Add(new List<Vector3>(rightPoints));
 
@@ -167,47 +162,38 @@ namespace StarterKit
                         pointsStack.RemoveAt(pointsStack.Count-1);
                     }
                 }
-
-                
-
             }
-
-
-
-
-
         }
 
-        /*public float BuildData(List<Vector4> mainData, List<Vector4> secData, float par)
+        public void BuildData(KDNode node)
         {
-            float ph = 0.0f;
-            if (root.photon)
-                ph = 1.0f;
-            Vector4 mainDataVec = new Vector4(root.point.X, root.point.Y, root.point.Z, ph);
-            mainData.Add(mainDataVec);
-            //GC.Collect();
-            
-
-            float left;
-            float right;
-
-            if (!root.photon)
-            {
-                float currentNumber = mainData.Count - 1;
-                left = root.left.BuildData(mainData, secData, currentNumber);
-                right = root.right.BuildData(mainData, secData, currentNumber);
-            }
+            if (node.photon)
+                mainData.Add(new Vector4(node.point.X, node.point.Y, node.point.Z, 1.0f));
             else
-            {
-                left = -1.0f;
-                right = -1.0f;
-            }
+                mainData.Add(new Vector4(node.point.X, node.point.Y, node.point.Z, 0.0f));
 
-            secData.Add(new Vector4(left, right, par, 0.0f));
-            GC.Collect();
+            float l = -1;
+            float r = -1;
+            float p = -1;
+
+            if (node.left != null)
+                l = node.leftk;
+            if (node.right != null)
+                r = node.rightk;
+            if (node.parent != null)
+                p = node.parentk;
+
+            secData.Add(new Vector4(l, r, p, 0.0f));
+
+            if (node.left != null)
+                BuildData(node.left);
+            if (node.right != null)
+                BuildData(node.right);
+        }
+
+        /*private List<Vector3> LeftPoints(List<Vector3> points)
+        {
             
-
-            return secData.Count - 1;
         }*/
 
     }
