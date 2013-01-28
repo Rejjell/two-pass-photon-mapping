@@ -29,8 +29,8 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 5;
-        private int mapHeight = 5;
+        int mapWidth = 1000;
+        private int mapHeight = 1000;
 
         float PhotonIntensity = 100.0F;
 

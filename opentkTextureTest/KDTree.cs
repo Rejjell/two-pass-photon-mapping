@@ -57,6 +57,7 @@ namespace StarterKit
                     
 
                     Vector3 dif = new Vector3(cubeMax.X - cubeMin.X, cubeMax.Y - cubeMin.Y, cubeMax.Z - cubeMin.Z);
+                    
 
                     leftPoints.Clear();
                     rightPoints.Clear();
@@ -67,31 +68,31 @@ namespace StarterKit
                     {
 
 
-                        root.point = new Vector3(X.Average(), 0.0f, 0.0f);
+                        current.point = new Vector3(X.Average(), 0.0f, 0.0f);
 
                         for (int i = 0; i < points.Count; i++)
-                            if (points.ElementAt(i).X <= root.point.X)
+                            if (points.ElementAt(i).X <= current.point.X)
                                 leftPoints.Add(points.ElementAt(i));
                             else
                                 rightPoints.Add(points.ElementAt(i));
                     }
                     else if (maxDim == dif.Y)
                     {
-                        root.point = new Vector3(0.0f, Y.Average(), 0.0f);
+                        current.point = new Vector3(0.0f, Y.Average(), 0.0f);
 
 
                         for (int i = 0; i < points.Count; i++)
-                            if (points.ElementAt(i).Y <= root.point.Y)
+                            if (points.ElementAt(i).Y <= current.point.Y)
                                 leftPoints.Add(points.ElementAt(i));
                             else
                                 rightPoints.Add(points.ElementAt(i));
                     }
                     else if (maxDim == dif.Z)
                     {
-                        root.point = new Vector3(0.0f, 0.0f, Z.Average());
+                        current.point = new Vector3(0.0f, 0.0f, Z.Average());
 
                         for (int i = 0; i < points.Count; i++)
-                            if (points.ElementAt(i).Z <= root.point.Z)
+                            if (points.ElementAt(i).Z <= current.point.Z)
                                 leftPoints.Add(points.ElementAt(i));
                             else
                                 rightPoints.Add(points.ElementAt(i));
@@ -107,8 +108,11 @@ namespace StarterKit
                     //leftPoints.Clear();
                     //root.right = rightTree.Balance(root, rightPoints);
 
-                    current.left = new KDNode();
-                    current.right = new KDNode();
+                    if (!current.visited)
+                    {
+                        current.left = new KDNode();
+                        current.right = new KDNode();
+                    }
                     current.left.parent = current;
                     current.right.parent = current;
            
@@ -118,30 +122,35 @@ namespace StarterKit
                 }
                 else
                 {
-                    root.point = points.ElementAt(0);
-                    root.photon = true;
+                    current.point = points.ElementAt(0);
+                    current.photon = true;
                 }
 
                 current.visited = true;
 
-                
+
 
                 if ((current.left != null) && (!current.left.visited))
                 {
                     current = current.left;
+                    parentPoints = new List<Vector3>(points);
                     points = new List<Vector3>(leftPoints);
-                    parentPoints = points;
-                }
-                else if ((current.right != null) && (!current.right.visited))
-                {
-                    current = current.right;
-                    points = new List<Vector3>(rightPoints);
-                    parentPoints = points;
+
                 }
                 else
                 {
-                    current = current.parent;
-                    points = new List<Vector3>(parentPoints);
+                    if ((current.right != null) && (!current.right.visited))
+                    {
+                        current = current.right;
+                        parentPoints = new List<Vector3>(points);
+                        points = new List<Vector3>(rightPoints);
+
+                    }
+                    else
+                    {
+                        current = current.parent;
+                        points = new List<Vector3>(parentPoints);
+                    }
                 }
             }
 
