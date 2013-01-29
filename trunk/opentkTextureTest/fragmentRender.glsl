@@ -1,6 +1,7 @@
-﻿//#version 130
+﻿#version 330 compatibility
 
 #extension GL_ARB_texture_rectangle : enable
+
 
 #ifndef PHOTON_MAP
 	struct SCamera
@@ -98,19 +99,25 @@ uniform vec2 PhotonMapSize;
 							// Size of photon map
 	uniform float PhotonIntensity;					// Intensity of single photon
 	uniform float Delta;							// Radius of vicinity for gathering of photons
-	uniform float InverseDelta;						// Inverse radius for fast calculations
+	uniform float InverseDelta;	
+				
 	uniform sampler2DRect PhotonTexture;
 	uniform sampler2DRect RectangleLightPointsPhongTexture;
+	uniform sampler2DRect PhotonMainDataTexture;
+	uniform sampler2DRect PhotonSecDataTexture;
 
 	const float ReflectRefractCoef = 0.5;
 
 #else
 	uniform sampler2DRect PhotonEmissionDirectionsTexture;
-	uniform sampler2DRect PhotonRefletionDirectionsTexture1;
-	uniform sampler2DRect PhotonRefletionDirectionsTexture2;
-	uniform sampler2DRect PhotonRefletionDirectionsTexture3;
+	uniform sampler2DRect PhotonReflectionDirectionsTexture1;
+	uniform sampler2DRect PhotonReflectionDirectionsTexture2;
+	uniform sampler2DRect PhotonReflectionDirectionsTexture3;
 	uniform sampler2DRect RectangleLightPointsTexture;
 	uniform sampler2DRect RandomProbabilityTexture;
+
+	out varying vec3 Photon;
+	out varying vec3 CausticPhoton;
 
 	
 #endif
@@ -207,16 +214,16 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 #ifndef PHOTON_MAP
 	vec3 PhongPointLight ( SIntersection intersect/*, vec3 pointLightPosition */)
 	{
-		vec3 pointLightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
+		vec3 pointLightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400)).xyz;
 		pointLightPosition.x *= 0.2;
 		pointLightPosition.y = 5.0;
 		pointLightPosition.z *= 0.2;
 		//vec3 light = normalize ( Light.Position - intersect.Point );
 		vec3 light = normalize ( pointLightPosition - intersect.Point );
 		vec3 view = normalize ( Camera.Position - intersect.Point );
-		float diffuse = max ( dot ( light, intersect.Normal ), 0.0 );
+		float diffuse = max ( dot ( light, intersect.Normal ), 0.1 );
 		vec3 reflection = reflect ( -view, intersect.Normal );
-		float specular = pow ( max ( dot ( reflection, light ), 0.0 ), intersect.Material.w );
+		float specular = pow ( max ( dot ( reflection, light ), 0.1 ), intersect.Material.w );
 
 		return intersect.Material.x * Unit +
 			   intersect.Material.y * diffuse * intersect.Color +
@@ -284,6 +291,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		}
 
 	}
+
 #endif
 
 void SetIntersection(SRay ray, inout SIntersection intersect, vec3 normal, vec3 color, vec4 material, float test)
@@ -420,9 +428,9 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	vec3[3] PhotonReflectionDirectionsInitialization()
 	{
 		vec3[3] directions;
-		directions[0] = texture2DRect(PhotonRefletionDirectionsTexture1, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
-		directions[1] = texture2DRect(PhotonRefletionDirectionsTexture2, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
-		directions[2] = texture2DRect(PhotonRefletionDirectionsTexture3, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+		directions[0] = texture2DRect(PhotonReflectionDirectionsTexture1, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+		directions[1] = texture2DRect(PhotonReflectionDirectionsTexture2, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
+		directions[2] = texture2DRect(PhotonReflectionDirectionsTexture3, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 
 		return directions;
 	}
@@ -525,11 +533,17 @@ void main ( void )
 				color = mainColor;
 
 			Caustic( intersect, color, reflectionInfluence );
+			
 		}
 	#endif
 
 	#ifdef PHOTON_MAP
-		gl_FragColor = vec4 ( intersect.Point, 0.0 );
+		if (reflection || refraction)
+			CausticPhoton = intersect.Point;
+		else
+			Photon = intersect.Point;
+
+		//gl_FragColor = vec4 ( intersect.Point, 0.0 );
 		//gl_FragColor = texture2DRect(RandomProbabilityTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#else
 		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
