@@ -79,7 +79,7 @@ const vec3 AxisZ = vec3 ( 0.0, 0.0, 1.0 );
 
 uniform vec3 BoxMinimum;					
 uniform vec3 BoxMaximum;					
-uniform SLight Light;							
+						
 uniform SSphere GlassSphere;
 uniform SSphere MatSphere;	
 uniform RectangleLightStruct RectangleLight;		
@@ -176,7 +176,7 @@ SRay GenerateRay ( void )
 	vec3 position = texture2DRect(RectangleLightPointsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	position.x *= RectangleLight.Width/2.0;
 	position.z *= RectangleLight.Length/2.0;
-	position.y = Light.Position.y-0.01;
+	position.y = 5.0-0.001;
 	return SRay ( position, normalize ( direction ) );
 #else
 	vec2 coords = gl_TexCoord[0].xy * Camera.Scale;
