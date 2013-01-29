@@ -3,7 +3,7 @@ using OpenTK;
 //using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-namespace StarterKit
+namespace PhotonMapping
 {
     public class Shader
     {

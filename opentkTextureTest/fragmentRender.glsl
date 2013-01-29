@@ -1,6 +1,4 @@
-﻿#version 330 compatibility
-
-#extension GL_ARB_texture_rectangle : enable
+﻿#extension GL_ARB_texture_rectangle : enable
 
 
 #ifndef PHOTON_MAP
@@ -55,8 +53,8 @@ struct RectangleLightStruct
 	float Length;
 };
 
-const float GlassAirIndex = 4.5;							// Ratio of refraction indices of glass and air
-const float AirGlassIndex = 1.0 / GlassAirIndex;			// Ratio of refraction indices of air and glass
+const float GlassAirIndex = 4.5;							
+const float AirGlassIndex = 1.0 / GlassAirIndex;			
 
 const vec3 GlassColor = vec3 ( 0.0, 1.0, 0.0 );		
 const vec3 MatColor = vec3 ( 0.0, 0.0, 1.0 );
@@ -65,10 +63,9 @@ const vec3 LeftWallColor = vec3 (0.0,1.0,0.0);
 const vec3 DefaultWallsColor = vec3 (1.0,0.6,0.25);
 
 const vec4 GlassMaterial = vec4 ( 0.1, 0.1, 0.6, 128.0 );
-const vec4 MatMaterial = vec4 ( 0.1, 1.0, 0.05, 8.0 );	// Glass material ( ambient, diffuse and specular coeffs )
+const vec4 MatMaterial = vec4 ( 0.1, 1.0, 0.05, 8.0 );	
 const vec4 WallMaterial = vec4 ( 0.1, 0.8, 0.1, 32.0 );	
-const vec4 ReflectiveWallMaterial = vec4 ( 0.1, 0.5, 0.5, 128.0 );	// Wall material ( ambient, diffuse and specular coeffs )
-
+const vec4 ReflectiveWallMaterial = vec4 ( 0.1, 0.5, 0.5, 128.0 );	
 const vec3 Zero = vec3 ( 0.0, 0.0, 0.0 );
 const vec3 Unit = vec3 ( 1.0, 1.0, 1.0 );
 
@@ -76,18 +73,13 @@ const vec3 AxisX = vec3 ( 1.0, 0.0, 0.0 );
 const vec3 AxisY = vec3 ( 0.0, 1.0, 0.0 );
 const vec3 AxisZ = vec3 ( 0.0, 0.0, 1.0 );
 
-const vec3 MirrorX = vec3 ( -1.0, 1.0, 1.0 );
-const vec3 MirrorY = vec3 ( 1.0, -1.0, 1.0 );
-const vec3 MirrorZ = vec3 ( 1.0, 1.0, -1.0 );
-
-
 #define BIG 1000000.0
 #define EPSILON 0.01
 #define PI 3.14159265
 
-uniform vec3 BoxMinimum;						// Minimum point of bounding box
-uniform vec3 BoxMaximum;						// Maximum point of bounding box
-uniform SLight Light;							// Ligth source parameters
+uniform vec3 BoxMinimum;					
+uniform vec3 BoxMaximum;					
+uniform SLight Light;							
 uniform SSphere GlassSphere;
 uniform SSphere MatSphere;	
 uniform RectangleLightStruct RectangleLight;		
@@ -95,10 +87,9 @@ uniform RectangleLightStruct RectangleLight;
 uniform vec2 PhotonMapSize;
 
 #ifndef PHOTON_MAP
-	uniform SCamera Camera;							// Camera parameters
-							// Size of photon map
-	uniform float PhotonIntensity;					// Intensity of single photon
-	uniform float Delta;							// Radius of vicinity for gathering of photons
+	uniform SCamera Camera;			
+	uniform float PhotonIntensity;	
+	uniform float Delta;			
 	uniform float InverseDelta;	
 				
 	uniform sampler2DRect PhotonTexture;
@@ -119,10 +110,8 @@ uniform vec2 PhotonMapSize;
 	uniform sampler2DRect RectangleLightPointsTexture;
 	uniform sampler2DRect RandomProbabilityTexture;
 
-	out varying vec3 Photon;
-	out varying vec3 CausticPhoton;
-
-	
+	out vec3 Photon;
+	out vec3 CausticPhoton;
 #endif
 
 
@@ -218,39 +207,35 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 	vec3 PhongPointLight ( SIntersection intersect/*, vec3 pointLightPosition */)
 	{
 		vec3 pointLightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400)).xyz;
-		pointLightPosition.x *= 0.2;
+		pointLightPosition.x *= 0.5;
 		pointLightPosition.y = 5.0;
-		pointLightPosition.z *= 0.2;
-		//vec3 light = normalize ( Light.Position - intersect.Point );
+		pointLightPosition.z *= 0.5;
 		vec3 light = normalize ( pointLightPosition - intersect.Point );
 		vec3 view = normalize ( Camera.Position - intersect.Point );
 		float diffuse = max ( dot ( light, intersect.Normal ), 0.1 );
 		vec3 reflection = reflect ( -view, intersect.Normal );
 		float specular = pow ( max ( dot ( reflection, light ), 0.1 ), intersect.Material.w );
 
+		vec3 point=intersect.Point;
+
+		if ((point.y<=5.01)&&(point.y>=4.99))  diffuse = 0.5 ;
+		if ((point.x<(RectangleLight.Center.x + RectangleLight.Width/2))
+			  &&(point.x>(RectangleLight.Center.x - RectangleLight.Width/2))
+			  &&(point.z<(RectangleLight.Center.y + RectangleLight.Length/2))
+			  &&(point.z>(RectangleLight.Center.y - RectangleLight.Length/2)))
+				diffuse = 1;
+
+
 		return intersect.Material.x * Unit +
 			   intersect.Material.y * diffuse * intersect.Color +
 			   intersect.Material.z * specular * Unit;
 	}
 
-	/*vec3 PhongRectangleLight ( SIntersection intersect )
-	{
-		vec3 v1 = vec3(0.0, 0.0,  RectangleLight.Length/2);
-		vec3 v2 = vec3(RectangleLight.Width/2, 0.0,  0.0);
-
-		return PhongPointLight(intersect, Light.Position + v1 + v2) +
-			   PhongPointLight(intersect, Light.Position - v1 + v2) +
-			   PhongPointLight(intersect, Light.Position + v1 - v2) +
-			   PhongPointLight(intersect, Light.Position - v1 - v2);
-	}*/
-
 	bool Compare ( vec3 left, vec3 right )
 	{
 		bvec3 greater = greaterThan ( left, right );
 		bvec3 equal = equal ( left, right );
-	
 		return greater.x || ( equal.x && greater.y ) || ( equal.x && equal.y && greater.z );
-
 	}
 
 	float BinSearch ( vec3 point, sampler2DRect tex, float texSize )

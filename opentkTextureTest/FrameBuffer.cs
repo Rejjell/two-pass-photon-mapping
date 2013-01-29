@@ -7,7 +7,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
-namespace StarterKit
+namespace PhotonMapping
 {
     class FrameBuffer
     {
