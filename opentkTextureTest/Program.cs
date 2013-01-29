@@ -163,9 +163,6 @@ namespace PhotonMapping
                 photonShader.SetUniform("GlassSphere.Radius", 2.0F);
                 photonShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 photonShader.SetUniform("MatSphere.Radius", 1.0F);
-                photonShader.SetUniform("Light.Position", new Vector3(0.0F, 4.999F, 0.0F));
-                photonShader.SetUniform("Light.Radius", new Vector2(0.5F * 10, 0.5F * 10));
-                photonShader.SetUniform("Light.Distance", 0.5F * 10);
                 photonShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
             photonShader.Deactivate();
         }
