@@ -102,9 +102,12 @@ uniform vec2 PhotonMapSize;
 	uniform float InverseDelta;	
 				
 	uniform sampler2DRect PhotonTexture;
+	uniform sampler2DRect CausticTexture;
 	uniform sampler2DRect RectangleLightPointsPhongTexture;
-	uniform sampler2DRect PhotonMainDataTexture;
-	uniform sampler2DRect PhotonSecDataTexture;
+
+	uniform float PhotonTextureSize;
+	uniform float CausticTextureSize;
+
 
 	const float ReflectRefractCoef = 0.5;
 
@@ -250,17 +253,17 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 
 	}
 
-	float BinSearch ( vec3 point )
+	float BinSearch ( vec3 point, sampler2DRect tex, float texSize )
 	{
 		float left = 0.0;
-		float right = PhotonMapSize.x * PhotonMapSize.y;
+		float right = texSize * texSize;
 		float center;
 
 		while ( left < right )
 		{
 			center = 0.5 * ( left + right );
 
-			vec3 position = texture2DRect ( PhotonTexture,	vec2 ( mod ( center, PhotonMapSize.x ), floor ( center / PhotonMapSize.y ))).xyz; 
+			vec3 position = texture2DRect ( tex,	vec2 ( mod ( center, texSize ), floor ( center / texSize ))).xyz; 
 		
 
 			if ( Compare ( point, position ) )
@@ -276,16 +279,34 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		return center;
 	}
 
-	void Caustic ( SIntersection intersect, inout vec3 color, float reflectionInfluence )
+	void PhotonGathering ( SIntersection intersect, inout vec3 color, float reflectionInfluence )
 	{
-		float left = BinSearch ( intersect.Point - vec3 ( Delta ) );
-		float right = BinSearch ( intersect.Point + vec3 ( Delta ) );
+		float left = BinSearch ( intersect.Point - vec3 ( Delta ), PhotonTexture, PhotonTextureSize );
+		float right = BinSearch ( intersect.Point + vec3 ( Delta ), PhotonTexture, PhotonTextureSize );
 	
 		for ( float i = left; i <= right; i++ )
 		{
 			vec4 photon = texture2DRect (
-				PhotonTexture, vec2 ( mod ( i, PhotonMapSize.x ), floor ( i / PhotonMapSize.y ) ) );
+				PhotonTexture, vec2 ( mod ( i, PhotonTextureSize ), floor ( i / PhotonTextureSize ) ) );
 		
+			if (photon.xyz != vec3(100.0, 100.0, 100.0))
+			color +=
+				max ( 0.0, 1.0 - InverseDelta * length ( photon.xyz - intersect.Point ) ) * PhotonIntensity * reflectionInfluence;
+		}
+
+	}
+
+	void CausticGathering ( SIntersection intersect, inout vec3 color, float reflectionInfluence )
+	{
+		float left = BinSearch ( intersect.Point - vec3 ( Delta ), CausticTexture, CausticTextureSize );
+		float right = BinSearch ( intersect.Point + vec3 ( Delta ), CausticTexture, CausticTextureSize );
+	
+		for ( float i = left; i <= right; i++ )
+		{
+			vec4 photon = texture2DRect (
+				CausticTexture, vec2 ( mod ( i, CausticTextureSize ), floor ( i / CausticTextureSize ) ) );
+			
+			if (photon.xyz != vec3(100.0, 100.0, 100.0))
 			color +=
 				max ( 0.0, 1.0 - InverseDelta * length ( photon.xyz - intersect.Point ) ) * PhotonIntensity * reflectionInfluence;
 		}
@@ -466,6 +487,7 @@ void main ( void )
 	bool continueTracing = true;
 	bool refraction = false;
 	bool reflection = false;
+	bool caustic = false;
 	bool air = true;
 	int rayCount = 0;
 	float reflectionInfluence = 1.0;
@@ -477,6 +499,10 @@ void main ( void )
 		{
 			rayCount++;
 			
+			if (!caustic)
+				if (reflection || refraction)
+					caustic = true;
+
 			continueTracing = reflection || refraction;
 
 			#ifndef PHOTON_MAP
@@ -532,13 +558,14 @@ void main ( void )
 			else
 				color = mainColor;
 
-			Caustic( intersect, color, reflectionInfluence );
+			PhotonGathering( intersect, color, reflectionInfluence );
+			CausticGathering( intersect, color, reflectionInfluence );
 			
 		}
 	#endif
 
 	#ifdef PHOTON_MAP
-		if (reflection || refraction)
+		if (caustic)
 			CausticPhoton = intersect.Point;
 		else
 			Photon = intersect.Point;

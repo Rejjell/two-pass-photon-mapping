@@ -26,16 +26,16 @@ namespace StarterKit
         private uint randomProbabilityTexture;
         private uint rectangleLightPointsPhongTexture;
 
-        private uint photonMainDataTexture;
-        private uint photonSecDataTexture;
+        private int photonMapSize;
+        private int causticMapSize;
         
         static int w = 800;
         static int h = 800;
 
         private int photonDataWidth;
 
-        int mapWidth = 5;
-        private int mapHeight = 5;
+        int mapWidth = 260;
+        private int mapHeight = 260;
 
         float PhotonIntensity = 100.0F;
 
@@ -78,15 +78,7 @@ namespace StarterKit
             frameBuffer.Activate();
             PhotonMapping();
             frameBuffer.Deactivate();
-
-            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetPhotonTexture());
-            float[] pix1 = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);
-
-            GL.ActiveTexture(TextureUnit.Texture1);
-            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetCausticTexture());
-            float[] pix2 = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix2);
+           
 
             PhotonMapSort();
             
@@ -248,10 +240,12 @@ namespace StarterKit
             GL.Viewport(0,0,w,h);
             
                 renderShader.Activate();
-                //renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture6, "PhotonTexture");
-                renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture7, "RectangleLightPointsPhongTexture");
-                renderShader.SetUniformTextureRect(photonMainDataTexture, TextureUnit.Texture8, "PhotonMainDataTexture");
-                renderShader.SetUniformTextureRect(photonSecDataTexture, TextureUnit.Texture9, "PhotonSecDataTexture");
+                renderShader.SetUniform("PhotonTextureSize", photonMapSize);
+                renderShader.SetUniform("CausticTextureSize", causticMapSize);
+                renderShader.SetUniformTextureRect(frameBuffer.GetPhotonTexture(), TextureUnit.Texture6, "PhotonTexture");
+                renderShader.SetUniformTextureRect(frameBuffer.GetCausticTexture(), TextureUnit.Texture7, "CausticTexture");
+                renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture8, "RectangleLightPointsPhongTexture");
+
                 
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-w/2, -h/2);
@@ -276,19 +270,43 @@ namespace StarterKit
 
         private void PhotonMapSort()
         {
-            GL.ActiveTexture(TextureUnit.Texture0);
-            //GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
+            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetPhotonTexture());
 
-            float[] pix = new float[mapWidth * mapHeight * 3];
+            float[] pix = new float[mapWidth*mapHeight*3];
             GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
 
             Vec3List list = new Vec3List(pix);
+
+
             list.Sort();
+            list.Clean();
+            photonMapSize = (int) Math.Ceiling(Math.Sqrt(list.list.Count));
+            list.Fill(photonMapSize);
+
             float[] pixSorted = list.ToFloatArray();
 
-            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
-                         PixelType.Float, pixSorted);
+            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, photonMapSize, photonMapSize, 0,
+                          PixelFormat.Rgb,
+                          PixelType.Float, pixSorted);
+
+
+            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetCausticTexture());
+
+            float[] pix1 = new float[mapWidth*mapHeight*3];
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);
+
+            Vec3List list1 = new Vec3List(pix1);
+            list1.Sort();
+            list1.Clean();
+            causticMapSize = (int) Math.Ceiling(Math.Sqrt(list1.list.Count));
+            list1.Fill(causticMapSize);
+            float[] pixSorted1 = list1.ToFloatArray();
+
+            GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, causticMapSize, causticMapSize, 0,
+                          PixelFormat.Rgb,
+                          PixelType.Float, pixSorted1);
         }
+
 
         [STAThread]
         static void Main()

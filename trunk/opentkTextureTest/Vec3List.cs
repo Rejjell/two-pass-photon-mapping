@@ -26,6 +26,29 @@ namespace StarterKit
             }
         }
 
+        public void Clean()
+        {
+            int i = 0;
+            while (i<list.Count)
+            {
+                if ((list.ElementAt(i).X == 0.0f) && (list.ElementAt(i).Y == 0.0f) && (list.ElementAt(i).Z == 0.0f))
+                {
+                    list.RemoveAt(i);
+                    
+                }
+                else
+                    i++;
+            }
+        }
+
+        public void Fill(int size)
+        {
+            Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
+
+            while (list.Count < size * size)
+                list.Add(new Vec3(100.0f, 100.0f, 100.0f));
+        }
+
         public void Sort()
         {
             list.Sort(Vec3.Compare);
