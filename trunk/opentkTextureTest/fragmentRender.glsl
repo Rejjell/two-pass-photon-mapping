@@ -176,7 +176,6 @@ SRay GenerateRay ( void )
 	vec3 position = texture2DRect(RectangleLightPointsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	position.x *= RectangleLight.Width/2.0;
 	position.z *= RectangleLight.Length/2.0;
-	//gl_FragColor = vec4 ( direction, 0.0 );
 	position.y = Light.Position.y-0.01;
 	return SRay ( position, normalize ( direction ) );
 #else
@@ -554,11 +553,7 @@ void main ( void )
 			CausticPhoton = intersect.Point;
 		else
 			Photon = intersect.Point;
-
-		//gl_FragColor = vec4 ( intersect.Point, 0.0 );
-		//gl_FragColor = texture2DRect(RandomProbabilityTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
 	#else
-		//gl_FragColor = texture2DRect(PhotonTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400));
-		gl_FragColor = vec4 ( color, 1.0 );
+			gl_FragColor = vec4 ( color, 1.0 );
 	#endif
 }
