@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace StarterKit
+namespace PhotonMapping
 {
     class Vec3
     {

@@ -6,9 +6,9 @@ using OpenTK.Input;
 using System.Drawing;
 using System.Diagnostics;
 
-namespace StarterKit
+namespace PhotonMapping
 {
-    class Game : GameWindow
+    class PhotonMappingClass : GameWindow
     {
         Camera camera = new Camera();
 
@@ -16,7 +16,6 @@ namespace StarterKit
         Shader photonShader;
 
         FrameBuffer frameBuffer;
-        FrameBuffer frameBuffer1;
 
         private uint rectangleLightPointsTexture;
         private uint photonEmissionDirectionsTexture;
@@ -32,14 +31,13 @@ namespace StarterKit
         static int w = 800;
         static int h = 800;
 
-        private int photonDataWidth;
 
-        int mapWidth = 260;
-        private int mapHeight = 260;
+        int mapWidth = 80;
+        private int mapHeight = 80;
 
         float PhotonIntensity = 100.0F;
 
-        public Game()
+        public PhotonMappingClass()
             : base(w, h, OpenTK.Graphics.GraphicsMode.Default, "OpenTK Quick Start Sample")
         {
             VSync = VSyncMode.On;
@@ -48,21 +46,17 @@ namespace StarterKit
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            
-
+           
             GL.ClearColor(0.0f, 0.4f, 0.0f, 0.0f);
-            
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
             GL.Ortho(-1, 1, -1, 1, -1, 1);
-            
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
             GL.Viewport(0, 0, w, h);
 
             renderShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "");
             photonShader = new Shader("..\\..\\vertexRender.glsl", "..\\..\\fragmentRender.glsl", "#define PHOTON_MAP");
-
             frameBuffer = new FrameBuffer(mapWidth, mapHeight);
 
             rectangleLightPointsTexture = GenerateRandomTexture(-1,1,mapWidth,mapHeight);
@@ -76,20 +70,16 @@ namespace StarterKit
             PhotonMappingUniformSet();
 
             frameBuffer.Activate();
-            PhotonMapping();
+                Photon_Mapping();
             frameBuffer.Deactivate();
-           
 
             PhotonMapSort();
-            
-            
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
-            if (Keyboard[Key.Escape])
-                Exit();
+            if (Keyboard[Key.Escape]) Exit();
             if (Keyboard[Key.Down]) camera.MoveBack();
             if (Keyboard[Key.Up]) camera.MoveForward();
             if (Keyboard[Key.S]) camera.MoveDown();
@@ -114,47 +104,38 @@ namespace StarterKit
         private uint GenerateRandomTexture(float a, float b,int w, int h)
         {
             float[] randomArray = new float[w * h * 3];
-
             Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
-
             for (int k = 0; k < w*h*3; k+=3)
             {
                 randomArray[k] = (float) r.NextDouble()*(b - a) + a;
                 randomArray[k + 1] = (float) r.NextDouble()*(b - a) + a;
                 randomArray[k + 2] = (float) r.NextDouble()*(b - a) + a;
             }
-
             uint texture;
             GL.GenTextures(1, out texture);
             GL.BindTexture(TextureTarget.TextureRectangle, texture);
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, w, h, 0, PixelFormat.Rgb,
                          PixelType.Float, randomArray);
-            
             return texture;
         }
 
         private uint GenerateRandomDirectionsTexture()
         {
             float[] randomArray = new float[mapWidth * mapHeight * 3];
-
             Random r = new Random((int)DateTime.Now.Ticks & 0x0000FFFF);
-
             for (int k = 0; k < mapWidth * mapHeight * 3; k += 3)
             {
                 randomArray[k] = (float)r.NextDouble() * 2 - 1;
                 randomArray[k + 1] = (float)r.NextDouble() * 2 - 1;
                 randomArray[k + 2] = (float)r.NextDouble() * 2 - 1;
             }
-
             uint texture;
             GL.GenTextures(1, out texture);
             GL.BindTexture(TextureTarget.TextureRectangle, texture);
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb,
                          PixelType.Float, randomArray);
-
             float[] fpix = new float[mapWidth * mapHeight * 3];
             GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
-
             return texture;
         }
 
@@ -162,26 +143,9 @@ namespace StarterKit
         {
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit);
-
-            
             RayTracingUniformSet();
-
             RayTracing();
-            
-            /*frameBuffer1 = new FrameBuffer(w, h);
-            frameBuffer1.Activate();
-            
-            RayTracing();
-
-            frameBuffer1.Deactivate();
-        
-            GL.ActiveTexture(TextureUnit.Texture9);
-            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer1.GetTexture());
-            float[] pix1 = new float[w * h * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);*/
-            
             SwapBuffers();
-            
         }
 
         private void PhotonMappingUniformSet()
@@ -230,33 +194,32 @@ namespace StarterKit
 
                 renderShader.SetUniform("RectangleLight.Center", new Vector2(0.0F, 0.0F));
                 renderShader.SetUniform("RectangleLight.Color", new Vector3(1.0F, 1.0F, 1.0F));
-                renderShader.SetUniform("RectangleLight.Length", 4.0F);
-                renderShader.SetUniform("RectangleLight.Width", 4.0F);
+                renderShader.SetUniform("RectangleLight.Length", 1.0F);
+                renderShader.SetUniform("RectangleLight.Width", 1.0F);
             renderShader.Deactivate();
         }
 
         private void RayTracing()
         {
             GL.Viewport(0,0,w,h);
-            
-                renderShader.Activate();
-                renderShader.SetUniform("PhotonTextureSize", photonMapSize);
-                renderShader.SetUniform("CausticTextureSize", causticMapSize);
-                renderShader.SetUniformTextureRect(frameBuffer.GetPhotonTexture(), TextureUnit.Texture6, "PhotonTexture");
-                renderShader.SetUniformTextureRect(frameBuffer.GetCausticTexture(), TextureUnit.Texture7, "CausticTexture");
-                renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture8, "RectangleLightPointsPhongTexture");
-
+            renderShader.Activate();
+            renderShader.SetUniform("PhotonTextureSize", photonMapSize);
+            renderShader.SetUniform("CausticTextureSize", causticMapSize);
+            renderShader.SetUniformTextureRect(frameBuffer.GetPhotonTexture(), TextureUnit.Texture6, "PhotonTexture");
+            renderShader.SetUniformTextureRect(frameBuffer.GetCausticTexture(), TextureUnit.Texture7, "CausticTexture");
+            renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture8, "RectangleLightPointsPhongTexture");
                 
-                GL.Begin(BeginMode.Quads);
+            GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-w/2, -h/2);
                 GL.Vertex2(w/2, -h/2);
                 GL.Vertex2(w/2, h/2);
                 GL.Vertex2(-w/2, h/2);
-                GL.End();
+            GL.End();
+
             renderShader.Deactivate();
         }
 
-        private void PhotonMapping()
+        private void Photon_Mapping()
         {
             photonShader.Activate();
                 GL.Begin(BeginMode.Quads);
@@ -271,12 +234,9 @@ namespace StarterKit
         private void PhotonMapSort()
         {
             GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetPhotonTexture());
-
             float[] pix = new float[mapWidth*mapHeight*3];
             GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
-
             Vec3List list = new Vec3List(pix);
-
 
             list.Sort();
             list.Clean();
@@ -311,9 +271,9 @@ namespace StarterKit
         [STAThread]
         static void Main()
         {
-            using (Game game = new Game())
+            using (PhotonMappingClass phtonMapping = new PhotonMappingClass())
             {
-                game.Run(30.0);
+                phtonMapping.Run(30.0);
             }
         }
     }
