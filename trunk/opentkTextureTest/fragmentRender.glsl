@@ -156,13 +156,10 @@ bool IntersectSphere ( SRay ray, float start, float final, out float time, SSphe
 		D = sqrt ( D );
 		float x1 = (-B - D)/A;
 		float x2 = (-B + D)/A;
-
 		if (outside)
 			time = min ( max ( 0.0, ( -B - D ) / A ), ( -B + D ) / A );
 		else
 			time = max ( 0.0, ( -B + D ) / A );
-
-
 		return ( time >= start ) && ( time <= final );
 	}
 
@@ -246,10 +243,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		while ( left < right )
 		{
 			center = 0.5 * ( left + right );
-
 			vec3 position = texture2DRect ( tex,	vec2 ( mod ( center, texSize ), floor ( center / texSize ))).xyz; 
-		
-
 			if ( Compare ( point, position ) )
 			{
 				left = center + 1.0;
@@ -478,17 +472,13 @@ void main ( void )
 
 	do
 	{
-
 		if ( Raytrace ( ray, EPSILON, final, intersect, reflection, refraction ) )
 		{
 			rayCount++;
-			
 			if (!caustic)
 				if (reflection || refraction)
 					caustic = true;
-
 			continueTracing = reflection || refraction;
-
 			#ifndef PHOTON_MAP
 				if (rayCount == 1)
 					mainColor = PhongPointLight(intersect);
@@ -527,13 +517,9 @@ void main ( void )
 		}
 		else
 			continueTracing = false;
-		
-
-		
 	}
 	while ((rayCount<depth)&&continueTracing);
 
-	
 	#ifndef PHOTON_MAP
 		if (rayCount > 0)
 		{
