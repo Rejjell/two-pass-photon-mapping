@@ -56,8 +56,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="KDNode.cs" />
-    <Compile Include="KDTree.cs" />
     <Compile Include="Scene.cs" />
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="Camera.cs" />

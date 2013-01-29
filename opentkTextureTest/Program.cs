@@ -20,17 +20,22 @@ namespace StarterKit
 
         private uint rectangleLightPointsTexture;
         private uint photonEmissionDirectionsTexture;
-        private uint photonRefletionDirectionsTexture1;
-        private uint photonRefletionDirectionsTexture2;
-        private uint photonRefletionDirectionsTexture3;
+        private uint photonReflectionDirectionsTexture1;
+        private uint photonReflectionDirectionsTexture2;
+        private uint photonReflectionDirectionsTexture3;
         private uint randomProbabilityTexture;
         private uint rectangleLightPointsPhongTexture;
+
+        private uint photonMainDataTexture;
+        private uint photonSecDataTexture;
         
         static int w = 800;
         static int h = 800;
 
-        int mapWidth = 2;
-        private int mapHeight = 2;
+        private int photonDataWidth;
+
+        int mapWidth = 5;
+        private int mapHeight = 5;
 
         float PhotonIntensity = 100.0F;
 
@@ -62,9 +67,9 @@ namespace StarterKit
 
             rectangleLightPointsTexture = GenerateRandomTexture(-1,1,mapWidth,mapHeight);
             photonEmissionDirectionsTexture = GenerateRandomDirectionsTexture();
-            photonRefletionDirectionsTexture1 = GenerateRandomDirectionsTexture();
-            photonRefletionDirectionsTexture2 = GenerateRandomDirectionsTexture();
-            photonRefletionDirectionsTexture3 = GenerateRandomDirectionsTexture();
+            photonReflectionDirectionsTexture1 = GenerateRandomDirectionsTexture();
+            photonReflectionDirectionsTexture2 = GenerateRandomDirectionsTexture();
+            photonReflectionDirectionsTexture3 = GenerateRandomDirectionsTexture();
             randomProbabilityTexture = GenerateRandomTexture(0, 1, mapWidth, mapHeight);
             rectangleLightPointsPhongTexture = GenerateRandomTexture(0, 1, 800, 800);
 
@@ -74,28 +79,14 @@ namespace StarterKit
             PhotonMapping();
             frameBuffer.Deactivate();
 
+            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetPhotonTexture());
+            float[] pix1 = new float[mapWidth * mapHeight * 3];
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix1);
+
             GL.ActiveTexture(TextureUnit.Texture1);
-            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
-            float[] pix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);
-
-            List<Vector3> list = new List<Vector3>();
-
-            for (int i = 0; i < pix.Length; i += 3)
-            {
-                Vector3 vec = new Vector3(pix[i], pix[i + 1], pix[i + 2]);
-                list.Add(vec);
-            }
-            
-            KDTree tree = new KDTree();
-            VSync = VSyncMode.Off;
-            tree.Balance(list);
-            tree.BuildData(tree.root);
-            VSync = VSyncMode.On;
-
-            List<Vector4> mainData = tree.mainData;
-            List<Vector4> secData = tree.secData;
-            //tree.BuildData(mainData, secData, -1);
+            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetCausticTexture());
+            float[] pix2 = new float[mapWidth * mapHeight * 3];
+            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix2);
 
             PhotonMapSort();
             
@@ -147,10 +138,6 @@ namespace StarterKit
             GL.TexImage2D(TextureTarget.TextureRectangle, 0, PixelInternalFormat.Rgb32f, w, h, 0, PixelFormat.Rgb,
                          PixelType.Float, randomArray);
             
-           /* float[] fpix = new float[mapWidth * mapHeight * 3];
-            GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, fpix);
-            */
-
             return texture;
         }
 
@@ -162,11 +149,6 @@ namespace StarterKit
 
             for (int k = 0; k < mapWidth * mapHeight * 3; k += 3)
             {
-                /*float x = (float)r.NextDouble()*2 - 1;
-                float y = (float)((r.NextDouble() * 2 - 1)*Math.Sqrt(1-x*x));
-                float z = (float) Math.Sqrt(1 - x*x - y*y);
-                float p = (float)r.NextDouble();
-                if (p > 0.5f) z = -z;*/
                 randomArray[k] = (float)r.NextDouble() * 2 - 1;
                 randomArray[k + 1] = (float)r.NextDouble() * 2 - 1;
                 randomArray[k + 2] = (float)r.NextDouble() * 2 - 1;
@@ -215,9 +197,9 @@ namespace StarterKit
             photonShader.Activate();
                 photonShader.SetUniformTextureRect(photonEmissionDirectionsTexture, TextureUnit.Texture0,  "PhotonEmissionDirectionsTexture");
                 photonShader.SetUniformTextureRect(rectangleLightPointsTexture, TextureUnit.Texture1, "RectangleLightPointsTexture");
-                photonShader.SetUniformTextureRect(photonRefletionDirectionsTexture1, TextureUnit.Texture2, "PhotonRefletionDirectionsTexture1");
-                photonShader.SetUniformTextureRect(photonRefletionDirectionsTexture2, TextureUnit.Texture3, "PhotonRefletionDirectionsTexture2");
-                photonShader.SetUniformTextureRect(photonRefletionDirectionsTexture3, TextureUnit.Texture4, "PhotonRefletionDirectionsTexture3");
+                photonShader.SetUniformTextureRect(photonReflectionDirectionsTexture1, TextureUnit.Texture2, "PhotonReflectionDirectionsTexture1");
+                photonShader.SetUniformTextureRect(photonReflectionDirectionsTexture2, TextureUnit.Texture3, "PhotonReflectionDirectionsTexture2");
+                photonShader.SetUniformTextureRect(photonReflectionDirectionsTexture3, TextureUnit.Texture4, "PhotonReflectionDirectionsTexture3");
                 photonShader.SetUniformTextureRect(randomProbabilityTexture, TextureUnit.Texture5, "RandomProbabilityTexture");
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
@@ -265,9 +247,11 @@ namespace StarterKit
         {
             GL.Viewport(0,0,w,h);
             
-            renderShader.Activate();
-                renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture6, "PhotonTexture");
+                renderShader.Activate();
+                //renderShader.SetUniformTextureRect(frameBuffer.GetTexture(), TextureUnit.Texture6, "PhotonTexture");
                 renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture7, "RectangleLightPointsPhongTexture");
+                renderShader.SetUniformTextureRect(photonMainDataTexture, TextureUnit.Texture8, "PhotonMainDataTexture");
+                renderShader.SetUniformTextureRect(photonSecDataTexture, TextureUnit.Texture9, "PhotonSecDataTexture");
                 
                 GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-w/2, -h/2);
@@ -293,7 +277,7 @@ namespace StarterKit
         private void PhotonMapSort()
         {
             GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
+            //GL.BindTexture(TextureTarget.TextureRectangle, frameBuffer.GetTexture());
 
             float[] pix = new float[mapWidth * mapHeight * 3];
             GL.GetTexImage(TextureTarget.TextureRectangle, 0, PixelFormat.Rgb, PixelType.Float, pix);

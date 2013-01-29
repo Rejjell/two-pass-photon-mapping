@@ -12,27 +12,33 @@ namespace StarterKit
     class FrameBuffer
     {
         private uint FboHandle;
-        private uint ColorTexture;
+        private uint photonTexture;
+        private uint causticTexture;
         private int mapWidth;
         private int mapHeight;
 
         public FrameBuffer(int mapWidth,int mapHeight)
         {
-            GL.GenTextures(1, out ColorTexture);
-            GL.BindTexture(TextureTarget.TextureRectangleArb, ColorTexture);
-            //GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            //GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.GenTextures(1, out photonTexture);
+            GL.BindTexture(TextureTarget.TextureRectangleArb, photonTexture);
             GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
             GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb, PixelType.Float, IntPtr.Zero);
 
+            GL.GenTextures(1, out causticTexture);
+            GL.BindTexture(TextureTarget.TextureRectangleArb, causticTexture);
+            GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.TextureRectangleArb, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexImage2D(TextureTarget.TextureRectangleArb, 0, PixelInternalFormat.Rgb32f, mapWidth, mapHeight, 0, PixelFormat.Rgb, PixelType.Float, IntPtr.Zero);
             GL.BindTexture(TextureTarget.TextureRectangleArb, 0);
 
             GL.Ext.GenFramebuffers(1, out FboHandle);
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, FboHandle);
-            GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0Ext, TextureTarget.TextureRectangleArb, ColorTexture, 0);
+            GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment0, TextureTarget.TextureRectangleArb, photonTexture, 0);
+            GL.Ext.FramebufferTexture2D(FramebufferTarget.FramebufferExt, FramebufferAttachment.ColorAttachment1, TextureTarget.TextureRectangleArb, causticTexture, 0);
 
-            
+            DrawBuffersEnum[] drawBuffers = { DrawBuffersEnum.ColorAttachment0, DrawBuffersEnum.ColorAttachment1 };
+            GL.DrawBuffers(2, drawBuffers);
 
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
 
@@ -51,9 +57,14 @@ namespace StarterKit
             GL.Ext.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
         }
 
-        public uint GetTexture()
+        public uint GetPhotonTexture()
         {
-            return ColorTexture;
+            return photonTexture;
+        }
+
+        public uint GetCausticTexture()
+        {
+            return causticTexture;
         }
     }
 }
