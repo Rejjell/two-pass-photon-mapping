@@ -1,8 +1,10 @@
-﻿#extension GL_ARB_texture_rectangle : enable
+﻿#version 330 compatibility
+
+#extension GL_ARB_texture_rectangle : enable
 
 
 #ifndef PHOTON_MAP
-	struct SCamera
+	struct CameraStruct
 	{
 		vec3 Position;
 		vec3 Side;
@@ -12,22 +14,13 @@
 	};
 #endif
 
-struct SLight
-{
-	vec3 Position;
-	#ifdef PHOTON_MAP
-		vec2 Radius;
-		float Distance;
-	#endif
-};
-
-struct SRay
+struct RayStruct
 {
 	vec3 Origin;
 	vec3 Direction;
 };
 
-struct SIntersection
+struct IntersectionStruct
 {
 	float Time;
 	vec3 Point;
@@ -39,7 +32,7 @@ struct SIntersection
 	#endif
 };
 
-struct SSphere
+struct SphereStruct
 {
 	vec3 Center;
 	float Radius;
@@ -53,8 +46,8 @@ struct RectangleLightStruct
 	float Length;
 };
 
-const float GlassAirIndex = 4.5;							
-const float AirGlassIndex = 1.0 / GlassAirIndex;			
+const float ToAirCoef = 4.5;							
+const float ToGlassCoef = 1.0 / ToAirCoef;			
 
 const vec3 GlassColor = vec3 ( 0.0, 1.0, 0.0 );		
 const vec3 MatColor = vec3 ( 0.0, 0.0, 1.0 );
@@ -73,21 +66,21 @@ const vec3 AxisX = vec3 ( 1.0, 0.0, 0.0 );
 const vec3 AxisY = vec3 ( 0.0, 1.0, 0.0 );
 const vec3 AxisZ = vec3 ( 0.0, 0.0, 1.0 );
 
-#define BIG 1000000.0
-#define EPSILON 0.01
 #define PI 3.14159265
+#define SMALL_VALUE 0.01
+#define LARGE_VALUE 1000000.0
 
 uniform vec3 BoxMinimum;					
 uniform vec3 BoxMaximum;					
 						
-uniform SSphere GlassSphere;
-uniform SSphere MatSphere;	
+uniform SphereStruct GlassSphere;
+uniform SphereStruct MatSphere;	
 uniform RectangleLightStruct RectangleLight;		
 
 uniform vec2 PhotonMapSize;
 
 #ifndef PHOTON_MAP
-	uniform SCamera Camera;			
+	uniform CameraStruct Camera;			
 	uniform float PhotonIntensity;	
 	uniform float Delta;			
 	uniform float InverseDelta;	
@@ -99,9 +92,7 @@ uniform vec2 PhotonMapSize;
 	uniform float PhotonTextureSize;
 	uniform float CausticTextureSize;
 
-
 	const float ReflectRefractCoef = 0.5;
-
 #else
 	uniform sampler2DRect PhotonEmissionDirectionsTexture;
 	uniform sampler2DRect PhotonReflectionDirectionsTexture1;
@@ -110,12 +101,12 @@ uniform vec2 PhotonMapSize;
 	uniform sampler2DRect RectangleLightPointsTexture;
 	uniform sampler2DRect RandomProbabilityTexture;
 
-	out vec3 Photon;
-	out vec3 CausticPhoton;
+	out varying vec3 Photon;
+	out varying vec3 CausticPhoton;
 #endif
 
 
-float IntersectBox ( SRay ray, vec3 minimum, vec3 maximum )
+float BoxIntersection ( RayStruct ray, vec3 minimum, vec3 maximum )
 {
 	vec3 OMAX = ( minimum - ray.Origin ) / ray.Direction;
 	vec3 OMIN = ( maximum - ray.Origin ) / ray.Direction;
@@ -124,7 +115,7 @@ float IntersectBox ( SRay ray, vec3 minimum, vec3 maximum )
 	return min ( MAX.x, min ( MAX.y, MAX.z ) );
 }
 
-bool IntersectBox ( SRay ray, vec3 minimum, vec3 maximum, out float start, out float final )
+bool BoxIntersection ( RayStruct ray, vec3 minimum, vec3 maximum, out float start, out float final )
 {
 	vec3 OMAX = ( minimum - ray.Origin ) / ray.Direction;
 	vec3 OMIN = ( maximum - ray.Origin ) / ray.Direction;
@@ -136,14 +127,14 @@ bool IntersectBox ( SRay ray, vec3 minimum, vec3 maximum, out float start, out f
 	return final > start;
 }
 
-bool IntersectPlane ( SRay ray, vec3 normal, float distance, float start, float final, out float time )
+bool PlaneIntersection ( RayStruct ray, vec3 normal, float distance, float start, float final, out float time )
 {
 	time = ( distance - dot ( normal, ray.Origin ) ) / dot ( normal, ray.Direction );
 
 	return ( time >= start ) && ( time <= final );
 }
 
-bool IntersectSphere ( SRay ray, float start, float final, out float time, SSphere Sphere, bool outside)
+bool SphereIntersection ( RayStruct ray, float start, float final, out float time, SphereStruct Sphere, bool outside)
 {
 	ray.Origin -= Sphere.Center;
 	float A = dot ( ray.Direction, ray.Direction );
@@ -166,7 +157,7 @@ bool IntersectSphere ( SRay ray, float start, float final, out float time, SSphe
 	return false;
 }
 
-SRay GenerateRay ( void )
+RayStruct GenerateRay ( void )
 {
 #ifdef PHOTON_MAP
 	vec3 direction = vec3(0.0,-1.0,0.0) + texture2DRect(PhotonEmissionDirectionsTexture, vec2((gl_TexCoord[0].x+1)*(PhotonMapSize.x/2), (gl_TexCoord[0].y+1)*(PhotonMapSize.y/2)));
@@ -174,12 +165,12 @@ SRay GenerateRay ( void )
 	position.x *= RectangleLight.Width/2.0;
 	position.z *= RectangleLight.Length/2.0;
 	position.y = 5.0-0.001;
-	return SRay ( position, normalize ( direction ) );
+	return RayStruct ( position, normalize ( direction ) );
 #else
 	vec2 coords = gl_TexCoord[0].xy * Camera.Scale;
 	vec3 direction = Camera.View + Camera.Side * coords.x + Camera.Up * coords.y;
 
-	return SRay ( Camera.Position, normalize ( direction ) );
+	return RayStruct ( Camera.Position, normalize ( direction ) );
 
 #endif
 }
@@ -200,7 +191,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 	}
 
 #ifndef PHOTON_MAP
-	vec3 PhongPointLight ( SIntersection intersect/*, vec3 pointLightPosition */)
+	vec3 PhongPointLight ( IntersectionStruct intersect)
 	{
 		vec3 pointLightPosition = texture2DRect(RectangleLightPointsPhongTexture, vec2((gl_TexCoord[0].x+1)*400, (gl_TexCoord[0].y+1)*400)).xyz;
 		pointLightPosition.x *= 0.5;
@@ -234,7 +225,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		return greater.x || ( equal.x && greater.y ) || ( equal.x && equal.y && greater.z );
 	}
 
-	float BinSearch ( vec3 point, sampler2DRect tex, float texSize )
+	float SearchPoint ( vec3 point, sampler2DRect tex, float texSize )
 	{
 		float left = 0.0;
 		float right = texSize * texSize;
@@ -257,10 +248,10 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 		return center;
 	}
 
-	void PhotonGathering ( SIntersection intersect, inout vec3 color, float reflectionInfluence )
+	void PhotonGathering ( IntersectionStruct intersect, inout vec3 color, float reflectionInfluence )
 	{
-		float left = BinSearch ( intersect.Point - vec3 ( Delta ), PhotonTexture, PhotonTextureSize );
-		float right = BinSearch ( intersect.Point + vec3 ( Delta ), PhotonTexture, PhotonTextureSize );
+		float left = SearchPoint ( intersect.Point - vec3 ( Delta ), PhotonTexture, PhotonTextureSize );
+		float right = SearchPoint ( intersect.Point + vec3 ( Delta ), PhotonTexture, PhotonTextureSize );
 	
 		for ( float i = left; i <= right; i++ )
 		{
@@ -274,10 +265,10 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 
 	}
 
-	void CausticGathering ( SIntersection intersect, inout vec3 color, float reflectionInfluence )
+	void CausticGathering ( IntersectionStruct intersect, inout vec3 color, float reflectionInfluence )
 	{
-		float left = BinSearch ( intersect.Point - vec3 ( Delta ), CausticTexture, CausticTextureSize );
-		float right = BinSearch ( intersect.Point + vec3 ( Delta ), CausticTexture, CausticTextureSize );
+		float left = SearchPoint ( intersect.Point - vec3 ( Delta ), CausticTexture, CausticTextureSize );
+		float right = SearchPoint ( intersect.Point + vec3 ( Delta ), CausticTexture, CausticTextureSize );
 	
 		for ( float i = left; i <= right; i++ )
 		{
@@ -293,7 +284,7 @@ vec3 Refract ( vec3 incident, vec3 normal, float index )
 
 #endif
 
-void SetIntersection(SRay ray, inout SIntersection intersect, vec3 normal, vec3 color, vec4 material, float test)
+void SetIntersection(RayStruct ray, inout IntersectionStruct intersect, vec3 normal, vec3 color, vec4 material, float test)
 {
 	intersect.Time = test;
 	intersect.Point = ray.Origin + ray.Direction * test;
@@ -308,15 +299,15 @@ void SetIntersection(SRay ray, inout SIntersection intersect, vec3 normal, vec3 
 
 
 
-bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect, out bool reflection, out bool refraction)
+bool Trace ( RayStruct ray, float start, float final, inout IntersectionStruct intersect, out bool reflection, out bool refraction)
 {
 	bool result = false;
-	float test = BIG;
+	float test = LARGE_VALUE;
 
 	reflection = false;
 	refraction = false;
 
-	if ( IntersectPlane ( ray, AxisY, BoxMinimum.y, start, final, test ) && test < intersect.Time )
+	if ( PlaneIntersection ( ray, AxisY, BoxMinimum.y, start, final, test ) && test < intersect.Time )
 	{
 		SetIntersection(ray, intersect, AxisY, DefaultWallsColor, WallMaterial, test);
 
@@ -325,7 +316,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		result = true;
 	}
 
-	if ( IntersectPlane ( ray, AxisY, BoxMaximum.y, start, final, test ) && test < intersect.Time )
+	if ( PlaneIntersection ( ray, AxisY, BoxMaximum.y, start, final, test ) && test < intersect.Time )
 	{
 		vec3 point = ray.Origin + ray.Direction * test;
 
@@ -343,7 +334,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 	}
 
 	
-	if ( IntersectPlane ( ray, AxisX, BoxMinimum.x, start, final, test ) && test < intersect.Time )
+	if ( PlaneIntersection ( ray, AxisX, BoxMinimum.x, start, final, test ) && test < intersect.Time )
 	{
 		SetIntersection(ray, intersect, AxisX, LeftWallColor, ReflectiveWallMaterial, test);
 
@@ -352,7 +343,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		result = true;
 	}
 
-	if ( IntersectPlane ( ray, AxisX, BoxMaximum.x, start, final, test ) && test < intersect.Time )
+	if ( PlaneIntersection ( ray, AxisX, BoxMaximum.x, start, final, test ) && test < intersect.Time )
 	{
 		SetIntersection(ray, intersect, -AxisX, RightWallColor, ReflectiveWallMaterial, test);
 		
@@ -361,7 +352,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		refraction = false;
 	}
 
-	if ( IntersectPlane ( ray, AxisZ, BoxMinimum.z, start, final, test ) && test < intersect.Time )
+	if ( PlaneIntersection ( ray, AxisZ, BoxMinimum.z, start, final, test ) && test < intersect.Time )
 	{
 		SetIntersection(ray, intersect, AxisZ, DefaultWallsColor, WallMaterial, test);
 
@@ -370,7 +361,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		result = true;
 	}
 	
-	if ( IntersectPlane ( ray, AxisZ, BoxMaximum.z, start, final, test ) && test < intersect.Time )
+	if ( PlaneIntersection ( ray, AxisZ, BoxMaximum.z, start, final, test ) && test < intersect.Time )
 	{
 		SetIntersection(ray, intersect, -AxisZ, DefaultWallsColor, WallMaterial, test);
 
@@ -379,7 +370,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		result = true;
 	}
 
-	if ( IntersectSphere ( ray, start, final, test, GlassSphere, true ) && test < intersect.Time )
+	if ( SphereIntersection ( ray, start, final, test, GlassSphere, true ) && test < intersect.Time )
 	{
 		vec3 normal = normalize ( (ray.Origin + ray.Direction * test) - GlassSphere.Center );  //Intersect.Point - GlassSphere.Center
 		SetIntersection(ray, intersect, normal, GlassColor, GlassMaterial, test);
@@ -389,7 +380,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		result = true;
 	}
 
-	if ( IntersectSphere ( ray, start, final, test, GlassSphere, false ) && test < intersect.Time )
+	if ( SphereIntersection ( ray, start, final, test, GlassSphere, false ) && test < intersect.Time )
 	{
 		vec3 normal = normalize ( (ray.Origin + ray.Direction * test) - GlassSphere.Center );  //Intersect.Point - GlassSphere.Center
 		SetIntersection(ray, intersect, normal, GlassColor, GlassMaterial, test);
@@ -399,7 +390,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		result = true;
 	}
 
-	if ( IntersectSphere ( ray, start, final, test, MatSphere, true ) && test < intersect.Time )
+	if ( SphereIntersection ( ray, start, final, test, MatSphere, true ) && test < intersect.Time )
 	{
 		vec3 normal = normalize ( (ray.Origin + ray.Direction * test) - MatSphere.Center );
 		SetIntersection(ray, intersect, normal, MatColor,MatMaterial, test);
@@ -438,20 +429,20 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 void main ( void )
 {
 
-	SRay ray = GenerateRay ( );
+	RayStruct ray = GenerateRay ( );
 	float start, final;
 
-	if ( !IntersectBox ( ray, BoxMinimum, BoxMaximum, start, final ) )
+	if ( !BoxIntersection ( ray, BoxMinimum, BoxMaximum, start, final ) )
 	{
 		discard;
 	}
 	
 	ray.Origin += start * ray.Direction;
-	SIntersection intersect;
-	intersect.Time = BIG;
+	IntersectionStruct intersect;
+	intersect.Time = LARGE_VALUE;
 
 	#ifdef PHOTON_MAP
-		intersect.Point = vec3 ( BIG );
+		intersect.Point = vec3 ( LARGE_VALUE );
 		float[3] probabilities = PhotonProbabilitiesInitialization();
 		vec3[3] directions = PhotonReflectionDirectionsInitialization();
 		int depth = 3;
@@ -472,7 +463,7 @@ void main ( void )
 
 	do
 	{
-		if ( Raytrace ( ray, EPSILON, final, intersect, reflection, refraction ) )
+		if ( Trace ( ray, SMALL_VALUE, final, intersect, reflection, refraction ) )
 		{
 			rayCount++;
 			if (!caustic)
@@ -502,7 +493,7 @@ void main ( void )
 					{
 						direction = refract ( ray.Direction,
 										 mix ( -intersect.Normal, intersect.Normal, float ( air ) ),
-										 mix ( GlassAirIndex, AirGlassIndex, float ( air ) ) );
+										 mix ( ToAirCoef, ToGlassCoef, float ( air ) ) );
 						air = !air; 
 					}
 					#ifdef PHOTON_MAP
@@ -510,9 +501,9 @@ void main ( void )
 						direction = intersect.Normal + directions[rayCount];
 					#endif
 				
-				ray = SRay ( intersect.Point, direction );
-				final = IntersectBox ( ray, BoxMinimum, BoxMaximum ); 
-				intersect.Time = BIG;
+				ray = RayStruct ( intersect.Point, direction );
+				final = BoxIntersection ( ray, BoxMinimum, BoxMaximum ); 
+				intersect.Time = LARGE_VALUE;
 			}
 		}
 		else

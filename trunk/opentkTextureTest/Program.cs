@@ -11,11 +11,9 @@ namespace PhotonMapping
     class PhotonMappingClass : GameWindow
     {
         Camera camera = new Camera();
-
-        Shader renderShader;
-        Shader photonShader;
-
-        FrameBuffer frameBuffer;
+        private Shader renderShader;
+        private Shader photonShader;
+        private FrameBuffer frameBuffer;
 
         private uint rectangleLightPointsTexture;
         private uint photonEmissionDirectionsTexture;
@@ -28,14 +26,13 @@ namespace PhotonMapping
         private int photonMapSize;
         private int causticMapSize;
         
-        static int w = 800;
-        static int h = 800;
+        private static int w = 800;
+        private static int h = 800;
 
-
-        int mapWidth = 80;
+        private int mapWidth = 80;
         private int mapHeight = 80;
 
-        float PhotonIntensity = 100.0F;
+        private float PhotonIntensity = 100.0F;
 
         public PhotonMappingClass()
             : base(w, h, OpenTK.Graphics.GraphicsMode.Default, "OpenTK Quick Start Sample")
@@ -99,7 +96,6 @@ namespace PhotonMapping
             if (Keyboard[Key.Q]) Console.WriteLine(camera.GetCoords());
 
         }
-        
 
         private uint GenerateRandomTexture(float a, float b,int w, int h)
         {
@@ -157,6 +153,7 @@ namespace PhotonMapping
                 photonShader.SetUniformTextureRect(photonReflectionDirectionsTexture2, TextureUnit.Texture3, "PhotonReflectionDirectionsTexture2");
                 photonShader.SetUniformTextureRect(photonReflectionDirectionsTexture3, TextureUnit.Texture4, "PhotonReflectionDirectionsTexture3");
                 photonShader.SetUniformTextureRect(randomProbabilityTexture, TextureUnit.Texture5, "RandomProbabilityTexture");
+
                 photonShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 photonShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 photonShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
@@ -170,6 +167,12 @@ namespace PhotonMapping
         private void RayTracingUniformSet()
         {
             renderShader.Activate();
+                renderShader.SetUniformTextureRect(frameBuffer.GetPhotonTexture(), TextureUnit.Texture6, "PhotonTexture");
+                renderShader.SetUniformTextureRect(frameBuffer.GetCausticTexture(), TextureUnit.Texture7, "CausticTexture");
+                renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture8, "RectangleLightPointsPhongTexture");
+
+                renderShader.SetUniform("PhotonTextureSize", photonMapSize);
+                renderShader.SetUniform("CausticTextureSize", causticMapSize);
                 renderShader.SetUniform("BoxMinimum", new Vector3(-5.0F, -5.0F, -5.0F));
                 renderShader.SetUniform("BoxMaximum", new Vector3(5.0F, 5.0F, 5.0F));
                 renderShader.SetUniform("GlassSphere.Center", new Vector3(2.0F, -3.0F, -2.0F));
@@ -177,18 +180,15 @@ namespace PhotonMapping
                 renderShader.SetUniform("MatSphere.Center", new Vector3(-3.0F, -4.0F, -3.0F));
                 renderShader.SetUniform("MatSphere.Radius", 1.0F);
                 renderShader.SetUniform("Light.Position", new Vector3(0.0F, 4.999F, 0.0F));
-
                 renderShader.SetUniform("Delta", 1.0F);
                 renderShader.SetUniform("InverseDelta", 1.0F / 1.0F);
                 renderShader.SetUniform("PhotonMapSize", new Vector2(mapWidth, mapHeight));
                 renderShader.SetUniform("PhotonIntensity",  PhotonIntensity / (mapWidth * mapHeight));
-
                 renderShader.SetUniform("Camera.Position", camera.GetPosition());
                 renderShader.SetUniform("Camera.View", camera.GetView());
                 renderShader.SetUniform("Camera.Side", camera.GetRight());
                 renderShader.SetUniform("Camera.Up", camera.GetUp());
                 renderShader.SetUniform("Camera.Scale", camera.GetScale());
-
                 renderShader.SetUniform("RectangleLight.Center", new Vector2(0.0F, 0.0F));
                 renderShader.SetUniform("RectangleLight.Color", new Vector3(1.0F, 1.0F, 1.0F));
                 renderShader.SetUniform("RectangleLight.Length", 1.0F);
@@ -200,11 +200,6 @@ namespace PhotonMapping
         {
             GL.Viewport(0,0,w,h);
             renderShader.Activate();
-            renderShader.SetUniform("PhotonTextureSize", photonMapSize);
-            renderShader.SetUniform("CausticTextureSize", causticMapSize);
-            renderShader.SetUniformTextureRect(frameBuffer.GetPhotonTexture(), TextureUnit.Texture6, "PhotonTexture");
-            renderShader.SetUniformTextureRect(frameBuffer.GetCausticTexture(), TextureUnit.Texture7, "CausticTexture");
-            renderShader.SetUniformTextureRect(rectangleLightPointsPhongTexture, TextureUnit.Texture8, "RectangleLightPointsPhongTexture");
                 
             GL.Begin(BeginMode.Quads);
                 GL.Vertex2(-w/2, -h/2);
