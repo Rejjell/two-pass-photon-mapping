@@ -56,7 +56,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Scene.cs" />
     <Compile Include="FrameBuffer.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Program.cs" />
